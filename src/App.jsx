@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import BarChart from "./components/BarChart";
 import LineChart from "./components/LineChart";
 import TrajectoryCanvas from "./components/TrajectoryCanvas";
@@ -6,12 +6,14 @@ import {
   initialLogs,
   logLevels,
   logWindows,
-  metricCards,
+  metricCards as fallbackMetricCards,
   trackSeeds,
-  trendHours,
-  trendValues,
-  zoneDurations,
+  trendHours as fallbackTrendHours,
+  trendValues as fallbackTrendValues,
+  zoneDurations as fallbackZoneDurations,
 } from "./data";
+import { fetchHealth, fetchLogs, fetchOverview } from "./hooks/api";
+import { connectTrackStream } from "./hooks/realtime";
 
 const UI = {
   brandMonitor: "XX\u6821\u56ed\u667a\u80fd\u76d1\u63a7\u7cfb\u7edf",
@@ -25,8 +27,13 @@ const UI = {
   monitorTitle: "\u5b9e\u65f6\u76d1\u63a7",
   monitorSubtitle: "2026\u5e7403\u670817\u65e5 - \u5b9e\u65f6\u89c6\u9891\u8f68\u8ff9\u5206\u6790",
   apiOnline: "API \u5728\u7ebf",
+  apiFallback: "API \u79bb\u7ebf",
+  redisOnline: "Redis",
+  redisOffline: "Redis \u79bb\u7ebf",
   wsConnected: "WS \u5df2\u8fde\u63a5",
+  wsFallback: "WS \u6a21\u62df\u6a21\u5f0f",
   streamRunning: "\u6570\u636e\u6d41\uff1a\u8fd0\u884c\u4e2d",
+  streamIdle: "\u6570\u636e\u6d41\uff1a\u5f85\u547d",
   uploadWaiting: "\u5f85\u5bfc\u5165\u89c6\u9891\u6e90",
   uploadHint:
     "\u8bf7\u5c06\u56ed\u5185\u76d1\u63a7\u89c6\u9891\u62d6\u52a8\u81f3\u6b64\u5904\uff0c\u6216\u901a\u8fc7\u5de6\u4fa7\u9762\u677f\u4e0a\u4f20\u3002\u7cfb\u7edf\u5c06\u81ea\u52a8\u89e3\u6790\u89c6\u9891\u5e27\u5e76\u8fdb\u884c\u8f68\u8ff9\u70b9\u62bd\u6837\u4e0e ID \u5206\u914d\u3002",
@@ -41,7 +48,8 @@ const UI = {
   trendTitle: "\u89e3\u6790\u70b9\u6570\u8d8b\u52bf (24h)",
   zoneTitle: "\u533a\u57df\u505c\u7559\u65f6\u957f TOP",
   logsTitle: "\u4e8b\u4ef6\u65e5\u5fd7",
-  updated: "\u6700\u540e\u66f4\u65b0: 1s \u524d",
+  updatedPrefix: "\u6700\u540e\u66f4\u65b0",
+  justNow: "\u521a\u521a",
   searchPlaceholder: "\u5173\u952e\u8bcd\u641c\u7d22...",
   refresh: "\u5237\u65b0",
 };
@@ -52,21 +60,139 @@ const navItems = [
   { key: "logs", label: UI.navLogs, icon: "L" },
 ];
 
+function formatLogTime(value) {
+  const ts = new Date(value);
+  if (Number.isNaN(ts.getTime())) return value;
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${ts.getFullYear()}-${pad(ts.getMonth() + 1)}-${pad(ts.getDate())} ${pad(ts.getHours())}:${pad(ts.getMinutes())}:${pad(ts.getSeconds())}`;
+}
+
 function App() {
   const [activePage, setActivePage] = useState("monitor");
   const [monitorMode, setMonitorMode] = useState("upload");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [tracks, setTracks] = useState(trackSeeds);
+  const [wsLive, setWsLive] = useState(false);
+  const [health, setHealth] = useState({ api: false, redis: false, ws: false });
+  const [overview, setOverview] = useState({
+    metricCards: fallbackMetricCards,
+    trendHours: fallbackTrendHours,
+    trendValues: fallbackTrendValues,
+    zoneDurations: fallbackZoneDurations,
+  });
+  const [logs, setLogs] = useState(initialLogs);
+  const [lastUpdated, setLastUpdated] = useState(UI.justNow);
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState("\u5168\u90e8\u7ea7\u522b");
   const [windowFilter] = useState("\u6700\u8fd11\u5c0f\u65f6");
 
-  const visibleLogs = useMemo(() => {
-    return initialLogs.filter((item) => {
-      const matchLevel = levelFilter === "\u5168\u90e8\u7ea7\u522b" || item.level === levelFilter;
-      const matchSearch = !search || item.text.toLowerCase().includes(search.toLowerCase());
-      return matchLevel && matchSearch;
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchHealth()
+      .then((data) => {
+        if (cancelled) return;
+        setHealth({ api: !!data.api, redis: !!data.redis, ws: !!data.ws });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setHealth({ api: false, redis: false, ws: false });
+      });
+
+    fetchOverview()
+      .then((data) => {
+        if (cancelled) return;
+        setOverview({
+          metricCards: data.metric_cards,
+          trendHours: data.trend_hours,
+          trendValues: data.trend_values,
+          zoneDurations: data.zone_durations,
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setOverview({
+          metricCards: fallbackMetricCards,
+          trendHours: fallbackTrendHours,
+          trendValues: fallbackTrendValues,
+          zoneDurations: fallbackZoneDurations,
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const backendLevel = levelFilter === "\u5168\u90e8\u7ea7\u522b" ? "ALL" : levelFilter;
+
+    fetchLogs(backendLevel)
+      .then((items) => {
+        if (cancelled) return;
+        setLogs(items.map((item) => ({ ...item, ts: formatLogTime(item.ts) })));
+        setLastUpdated(UI.justNow);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLogs(initialLogs);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [levelFilter]);
+
+  useEffect(() => {
+    if (activePage !== "monitor" || monitorMode !== "track") {
+      return undefined;
+    }
+
+    let closed = false;
+    const socket = connectTrackStream({
+      onMessage: (nextTracks) => {
+        if (closed) return;
+        setTracks(nextTracks);
+        setWsLive(true);
+      },
+      onError: () => {
+        if (closed) return;
+        setWsLive(false);
+        setTracks(trackSeeds);
+      },
     });
-  }, [levelFilter, search]);
+
+    socket.onclose = () => {
+      if (closed) return;
+      setWsLive(false);
+      setTracks(trackSeeds);
+    };
+
+    return () => {
+      closed = true;
+      socket.close();
+    };
+  }, [activePage, monitorMode]);
+
+  const visibleLogs = useMemo(() => {
+    return logs.filter((item) => {
+      const matchSearch = !search || item.text.toLowerCase().includes(search.toLowerCase());
+      return matchSearch;
+    });
+  }, [logs, search]);
+
+  const refreshLogs = () => {
+    const backendLevel = levelFilter === "\u5168\u90e8\u7ea7\u522b" ? "ALL" : levelFilter;
+    fetchLogs(backendLevel)
+      .then((items) => {
+        setLogs(items.map((item) => ({ ...item, ts: formatLogTime(item.ts) })));
+        setLastUpdated(UI.justNow);
+      })
+      .catch(() => {
+        setLogs(initialLogs);
+      });
+  };
 
   return (
     <div className="app-shell">
@@ -113,10 +239,10 @@ function App() {
                 <p>{UI.monitorSubtitle}</p>
               </div>
               <div className="topbar-tags">
-                <span className="status-tag success">{UI.apiOnline}</span>
-                <span className="status-tag success">Redis</span>
-                <span className="status-tag success">{UI.wsConnected}</span>
-                <span className="status-tag success">{UI.streamRunning}</span>
+                <span className={`status-tag ${health.api ? "success" : "info"}`}>{health.api ? UI.apiOnline : UI.apiFallback}</span>
+                <span className={`status-tag ${health.redis ? "success" : "info"}`}>{health.redis ? UI.redisOnline : UI.redisOffline}</span>
+                <span className={`status-tag ${wsLive ? "success" : "info"}`}>{wsLive ? UI.wsConnected : UI.wsFallback}</span>
+                <span className={`status-tag ${health.api ? "success" : "info"}`}>{health.api ? UI.streamRunning : UI.streamIdle}</span>
                 <span className="status-tag info">camera_id: 1</span>
                 <span className="help-dot">i</span>
               </div>
@@ -168,7 +294,7 @@ function App() {
                     <h2>{UI.monitorTitle}</h2>
                     <span>{UI.trackHint}</span>
                   </div>
-                  <TrajectoryCanvas tracks={trackSeeds} />
+                  <TrajectoryCanvas tracks={tracks} />
                 </div>
               )}
             </section>
@@ -184,7 +310,7 @@ function App() {
 
             <section className="overview-grid">
               <div className="metric-row">
-                {metricCards.map((card) => (
+                {overview.metricCards.map((card) => (
                   <article className="metric-card" key={card.label}>
                     <span className="metric-label">{card.label}</span>
                     <div className="metric-main">
@@ -197,12 +323,12 @@ function App() {
 
               <article className="panel-card">
                 <h3>{UI.trendTitle}</h3>
-                <LineChart hours={trendHours} values={trendValues} />
+                <LineChart hours={overview.trendHours} values={overview.trendValues} />
               </article>
 
               <article className="panel-card side-panel">
                 <h3>{UI.zoneTitle}</h3>
-                <BarChart data={zoneDurations} />
+                <BarChart data={overview.zoneDurations} />
               </article>
             </section>
           </>
@@ -213,7 +339,7 @@ function App() {
             <header className="topbar topbar-plain">
               <h1>{UI.logsTitle}</h1>
               <div className="topbar-inline">
-                <span>{UI.updated}</span>
+                <span>{`${UI.updatedPrefix}: ${lastUpdated}`}</span>
                 <span className="signal-dot" />
               </div>
             </header>
@@ -242,7 +368,7 @@ function App() {
                     </option>
                   ))}
                 </select>
-                <button className="refresh-button">{UI.refresh}</button>
+                <button className="refresh-button" onClick={refreshLogs}>{UI.refresh}</button>
               </div>
 
               <div className="log-viewer">

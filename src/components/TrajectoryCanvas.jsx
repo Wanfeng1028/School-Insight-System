@@ -1,10 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-
-const statusCards = [
-  { type: "online", text: "FPS: 24 | POINTS: 8" },
-  { type: "log", text: "LOG: 10:23:45 RECEIVE_BUFFER_OK" },
-  { type: "sub", text: "SUB: camera.1.tracks" },
-];
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 
 function interpolate(points, t) {
   if (points.length === 1) return points[0];
@@ -17,22 +11,21 @@ function interpolate(points, t) {
   return [x1 + (x2 - x1) * localT, y1 + (y2 - y1) * localT];
 }
 
-function drawRoundedRect(ctx, x, y, width, height, radius) {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + width, y, x + width, y + height, radius);
-  ctx.arcTo(x + width, y + height, x, y + height, radius);
-  ctx.arcTo(x, y + height, x, y, radius);
-  ctx.arcTo(x, y, x + width, y, radius);
-  ctx.closePath();
-}
-
 function TrajectoryCanvas({ tracks }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(0);
   const startRef = useRef(0);
   const fpsRef = useRef(24);
   const [, setFps] = useState(24);
+
+  const panelItems = useMemo(
+    () => [
+      { key: "fps", tone: "online", text: `FPS: ${fpsRef.current} | POINTS: ${tracks.length}` },
+      { key: "log", tone: "muted", text: "LOG: RECEIVE_BUFFER_OK" },
+      { key: "sub", tone: "muted", text: "SUB: camera.1.tracks" },
+    ],
+    [tracks.length],
+  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -89,22 +82,6 @@ function TrajectoryCanvas({ tracks }) {
         ctx.fillText(track.label, x + 8, y + 5);
       });
 
-      ctx.fillStyle = "rgba(14, 20, 36, 0.9)";
-      statusCards.forEach((card, index) => {
-        drawRoundedRect(ctx, 22, 24 + index * 44, 286, 30, 4);
-        ctx.fill();
-        if (card.type === "online") {
-          ctx.fillStyle = "#11b452";
-          ctx.beginPath();
-          ctx.arc(39, 39, 6, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.fillStyle = "#d7dfef";
-        ctx.font = "bold 11px Segoe UI";
-        const textX = card.type === "online" ? 55 : 36;
-        ctx.fillText(card.type === "online" ? `FPS: ${fpsRef.current} | POINTS: 8` : card.text, textX, 43 + index * 44);
-      });
-
       frameCounter += 1;
       if (ts - lastFpsTime >= 1000) {
         fpsRef.current = frameCounter;
@@ -128,6 +105,14 @@ function TrajectoryCanvas({ tracks }) {
   return (
     <div className="trajectory-stage">
       <canvas ref={canvasRef} className="trajectory-canvas" />
+      <div className="stage-overlay">
+        {panelItems.map((item, index) => (
+          <div className={`stage-status ${item.tone}`} key={item.key + index}>
+            {item.tone === "online" ? <span className="stage-led" /> : null}
+            <span>{item.key === "fps" ? `FPS: ${fpsRef.current} | POINTS: ${tracks.length}` : item.text}</span>
+          </div>
+        ))}
+      </div>
       <div className="stage-controls">
         <button className="stage-button">CAM</button>
         <button className="stage-button">CFG</button>
