@@ -12,7 +12,7 @@ import {
   trendValues as fallbackTrendValues,
   zoneDurations as fallbackZoneDurations,
 } from "./data";
-import { fetchHealth, fetchLogs, fetchOverview } from "./hooks/api";
+import { downloadReport, fetchHealth, fetchLogs, fetchOverview, uploadVideo } from "./hooks/api";
 import { connectTrackStream } from "./hooks/realtime";
 
 const UI = {
@@ -38,13 +38,23 @@ const UI = {
   uploadHint:
     "\u8bf7\u5c06\u56ed\u5185\u76d1\u63a7\u89c6\u9891\u62d6\u52a8\u81f3\u6b64\u5904\uff0c\u6216\u901a\u8fc7\u5de6\u4fa7\u9762\u677f\u4e0a\u4f20\u3002\u7cfb\u7edf\u5c06\u81ea\u52a8\u89e3\u6790\u89c6\u9891\u5e27\u5e76\u8fdb\u884c\u8f68\u8ff9\u70b9\u62bd\u6837\u4e0e ID \u5206\u914d\u3002",
   chooseFile: "\u70b9\u51fb\u6b64\u5904\u9009\u62e9\u89c6\u9891\u6587\u4ef6",
-  fileTypes: "\u652f\u6301 MP4, AVI, MOV (\u63a8\u8350 1080P/25FPS)",
+  dragFile: "\u6216\u5c06\u6587\u4ef6\u62d6\u62fd\u5230\u8fd9\u91cc",
+  fileTypes: "\u652f\u6301 MP4, AVI, MOV (\u63a8\u8350 1080P/25FPS, \u5355\u6587\u4ef6 <= 300MB)",
   uploadBind: "\u4e0a\u4f20\u5e76\u7ed1\u5b9a",
+  uploading: "\u4e0a\u4f20\u4e2d...",
+  uploadDone: "\u4e0a\u4f20\u6210\u529f\uff0c\u5df2\u5207\u5165\u8f68\u8ff9\u76d1\u63a7\u3002",
   selectedSuffix: " \u5df2\u9009\u62e9\uff0c\u7b49\u5f85\u7ed1\u5b9a\u5206\u6790\u6d41\u3002",
+  uploadFailed: "\u4e0a\u4f20\u5931\u8d25\uff0c\u8bf7\u5148\u542f\u52a8 FastAPI \u670d\u52a1\u3002",
+  pickFileFirst: "\u8bf7\u5148\u9009\u62e9\u8981\u4e0a\u4f20\u7684\u89c6\u9891\u6587\u4ef6\u3002",
+  badType: "\u4ec5\u652f\u6301 MP4 / AVI / MOV \u683c\u5f0f\u6587\u4ef6\u3002",
+  tooLarge: "\u6587\u4ef6\u4f53\u79ef\u8d85\u8fc7 300MB\uff0c\u8bf7\u66f4\u6362\u89c6\u9891\u3002",
   noData: "\u6570\u636e\u6d41\uff1a\u65e0\u6570\u636e",
   trackHint: "camera_id:1 / buffer: ok / mode: realtime",
   overviewTitle: "\u7edf\u8ba1\u6982\u89c8",
   exportReport: "\u5bfc\u51fa\u62a5\u544a",
+  exporting: "\u5bfc\u51fa\u4e2d...",
+  exportDone: "\u62a5\u544a\u5df2\u5f00\u59cb\u4e0b\u8f7d\u3002",
+  exportFail: "\u62a5\u544a\u5bfc\u51fa\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u540e\u7aef\u670d\u52a1\u3002",
   trendTitle: "\u89e3\u6790\u70b9\u6570\u8d8b\u52bf (24h)",
   zoneTitle: "\u533a\u57df\u505c\u7559\u65f6\u957f TOP",
   logsTitle: "\u4e8b\u4ef6\u65e5\u5fd7",
@@ -60,6 +70,9 @@ const navItems = [
   { key: "logs", label: UI.navLogs, icon: "L" },
 ];
 
+const ALLOWED_SUFFIXES = [".mp4", ".avi", ".mov"];
+const MAX_UPLOAD_SIZE = 300 * 1024 * 1024;
+
 function formatLogTime(value) {
   const ts = new Date(value);
   if (Number.isNaN(ts.getTime())) return value;
@@ -67,13 +80,26 @@ function formatLogTime(value) {
   return `${ts.getFullYear()}-${pad(ts.getMonth() + 1)}-${pad(ts.getDate())} ${pad(ts.getHours())}:${pad(ts.getMinutes())}:${pad(ts.getSeconds())}`;
 }
 
+function validateFile(file) {
+  if (!file) return { ok: false, message: UI.pickFileFirst };
+  const lower = file.name.toLowerCase();
+  const matched = ALLOWED_SUFFIXES.some((suffix) => lower.endsWith(suffix));
+  if (!matched) return { ok: false, message: UI.badType };
+  if (file.size > MAX_UPLOAD_SIZE) return { ok: false, message: UI.tooLarge };
+  return { ok: true, message: file.name + UI.selectedSuffix };
+}
+
 function App() {
   const [activePage, setActivePage] = useState("monitor");
   const [monitorMode, setMonitorMode] = useState("upload");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadState, setUploadState] = useState("idle");
+  const [uploadMessage, setUploadMessage] = useState(UI.noData);
+  const [dragActive, setDragActive] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [tracks, setTracks] = useState(trackSeeds);
   const [wsLive, setWsLive] = useState(false);
-  const [health, setHealth] = useState({ api: false, redis: false, ws: false });
+  const [health, setHealth] = useState({ api: false, redis: false, ws: false, stream_active: false, camera_id: "camera_id: 1", current_file: null });
   const [overview, setOverview] = useState({
     metricCards: fallbackMetricCards,
     trendHours: fallbackTrendHours,
@@ -86,22 +112,26 @@ function App() {
   const [levelFilter, setLevelFilter] = useState("\u5168\u90e8\u7ea7\u522b");
   const [windowFilter] = useState("\u6700\u8fd11\u5c0f\u65f6");
 
-  useEffect(() => {
-    let cancelled = false;
-
-    fetchHealth()
+  const loadHealth = () => {
+    return fetchHealth()
       .then((data) => {
-        if (cancelled) return;
-        setHealth({ api: !!data.api, redis: !!data.redis, ws: !!data.ws });
+        setHealth({
+          api: !!data.api,
+          redis: !!data.redis,
+          ws: !!data.ws,
+          stream_active: !!data.stream_active,
+          camera_id: data.camera_id || "camera_id: 1",
+          current_file: data.current_file || null,
+        });
       })
       .catch(() => {
-        if (cancelled) return;
-        setHealth({ api: false, redis: false, ws: false });
+        setHealth({ api: false, redis: false, ws: false, stream_active: false, camera_id: "camera_id: 1", current_file: null });
       });
+  };
 
-    fetchOverview()
+  const loadOverview = () => {
+    return fetchOverview()
       .then((data) => {
-        if (cancelled) return;
         setOverview({
           metricCards: data.metric_cards,
           trendHours: data.trend_hours,
@@ -110,7 +140,6 @@ function App() {
         });
       })
       .catch(() => {
-        if (cancelled) return;
         setOverview({
           metricCards: fallbackMetricCards,
           trendHours: fallbackTrendHours,
@@ -118,30 +147,44 @@ function App() {
           zoneDurations: fallbackZoneDurations,
         });
       });
+  };
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const backendLevel = levelFilter === "\u5168\u90e8\u7ea7\u522b" ? "ALL" : levelFilter;
-
-    fetchLogs(backendLevel)
+  const loadLogs = (nextLevel = levelFilter) => {
+    const backendLevel = nextLevel === "\u5168\u90e8\u7ea7\u522b" ? "ALL" : nextLevel;
+    return fetchLogs(backendLevel)
       .then((items) => {
-        if (cancelled) return;
         setLogs(items.map((item) => ({ ...item, ts: formatLogTime(item.ts) })));
         setLastUpdated(UI.justNow);
       })
       .catch(() => {
-        if (cancelled) return;
         setLogs(initialLogs);
       });
+  };
+
+  useEffect(() => {
+    loadHealth();
+    loadOverview();
+    loadLogs();
+
+    const healthTimer = window.setInterval(() => {
+      loadHealth();
+    }, 5000);
+    const overviewTimer = window.setInterval(() => {
+      loadOverview();
+    }, 12000);
+    const logsTimer = window.setInterval(() => {
+      loadLogs(levelFilter);
+    }, 8000);
 
     return () => {
-      cancelled = true;
+      window.clearInterval(healthTimer);
+      window.clearInterval(overviewTimer);
+      window.clearInterval(logsTimer);
     };
+  }, []);
+
+  useEffect(() => {
+    loadLogs(levelFilter);
   }, [levelFilter]);
 
   useEffect(() => {
@@ -183,16 +226,64 @@ function App() {
   }, [logs, search]);
 
   const refreshLogs = () => {
-    const backendLevel = levelFilter === "\u5168\u90e8\u7ea7\u522b" ? "ALL" : levelFilter;
-    fetchLogs(backendLevel)
-      .then((items) => {
-        setLogs(items.map((item) => ({ ...item, ts: formatLogTime(item.ts) })));
-        setLastUpdated(UI.justNow);
-      })
-      .catch(() => {
-        setLogs(initialLogs);
-      });
+    loadLogs(levelFilter);
   };
+
+  const applyFile = (file) => {
+    const result = validateFile(file);
+    if (!result.ok) {
+      setSelectedFile(null);
+      setUploadState("error");
+      setUploadMessage(result.message);
+      return;
+    }
+    setSelectedFile(file);
+    setUploadState("idle");
+    setUploadMessage(result.message);
+  };
+
+  const handleUpload = async () => {
+    const result = validateFile(selectedFile);
+    if (!result.ok) {
+      setUploadState("error");
+      setUploadMessage(result.message);
+      return;
+    }
+
+    try {
+      setUploadState("uploading");
+      setUploadMessage(UI.uploading);
+      await uploadVideo(selectedFile);
+      setUploadState("success");
+      setUploadMessage(UI.uploadDone);
+      await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter)]);
+      setMonitorMode("track");
+    } catch (error) {
+      const text = String(error?.message || "");
+      if (text.includes("unsupported_file_type")) {
+        setUploadMessage(UI.badType);
+      } else if (text.includes("file_too_large")) {
+        setUploadMessage(UI.tooLarge);
+      } else {
+        setUploadMessage(UI.uploadFailed);
+      }
+      setUploadState("error");
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      await downloadReport();
+      setLastUpdated(UI.exportDone);
+    } catch {
+      setLastUpdated(UI.exportFail);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const uploadTipClass = uploadState === "success" ? "success" : uploadState === "error" ? "error" : selectedFile ? "success" : "error";
 
   return (
     <div className="app-shell">
@@ -242,8 +333,8 @@ function App() {
                 <span className={`status-tag ${health.api ? "success" : "info"}`}>{health.api ? UI.apiOnline : UI.apiFallback}</span>
                 <span className={`status-tag ${health.redis ? "success" : "info"}`}>{health.redis ? UI.redisOnline : UI.redisOffline}</span>
                 <span className={`status-tag ${wsLive ? "success" : "info"}`}>{wsLive ? UI.wsConnected : UI.wsFallback}</span>
-                <span className={`status-tag ${health.api ? "success" : "info"}`}>{health.api ? UI.streamRunning : UI.streamIdle}</span>
-                <span className="status-tag info">camera_id: 1</span>
+                <span className={`status-tag ${health.stream_active ? "success" : "info"}`}>{health.stream_active ? UI.streamRunning : UI.streamIdle}</span>
+                <span className="status-tag info">{health.camera_id}</span>
                 <span className="help-dot">i</span>
               </div>
             </header>
@@ -271,28 +362,43 @@ function App() {
                     <h2>{UI.uploadWaiting}</h2>
                     <p>{UI.uploadHint}</p>
                   </div>
-                  <label className="dropzone">
+                  <label
+                    className={`dropzone ${dragActive ? "drag-active" : ""}`}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setDragActive(true);
+                    }}
+                    onDragLeave={() => setDragActive(false)}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      setDragActive(false);
+                      const file = event.dataTransfer.files?.[0] ?? null;
+                      applyFile(file);
+                    }}
+                  >
                     <input
                       type="file"
                       accept=".mp4,.avi,.mov"
-                      onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] ?? null;
+                        applyFile(file);
+                      }}
                     />
                     <div className="dropzone-plus">+</div>
                     <strong>{UI.chooseFile}</strong>
+                    <em>{UI.dragFile}</em>
                     <span>{UI.fileTypes}</span>
                   </label>
-                  <button className="primary-button">{UI.uploadBind}</button>
-                  {selectedFile ? (
-                    <div className="upload-tip success">{selectedFile.name + UI.selectedSuffix}</div>
-                  ) : (
-                    <div className="upload-tip error">{UI.noData}</div>
-                  )}
+                  <button className="primary-button" onClick={handleUpload} disabled={uploadState === "uploading"}>
+                    {uploadState === "uploading" ? UI.uploading : UI.uploadBind}
+                  </button>
+                  <div className={`upload-tip ${uploadTipClass}`}>{uploadMessage}</div>
                 </div>
               ) : (
                 <div className="track-card">
                   <div className="track-card-head">
                     <h2>{UI.monitorTitle}</h2>
-                    <span>{UI.trackHint}</span>
+                    <span>{health.current_file ? `${health.camera_id} / ${health.current_file}` : UI.trackHint}</span>
                   </div>
                   <TrajectoryCanvas tracks={tracks} />
                 </div>
@@ -305,7 +411,9 @@ function App() {
           <>
             <header className="topbar topbar-plain">
               <h1>{UI.overviewTitle}</h1>
-              <button className="outline-blue">{UI.exportReport}</button>
+              <button className="outline-blue" onClick={handleExport} disabled={exporting}>
+                {exporting ? UI.exporting : UI.exportReport}
+              </button>
             </header>
 
             <section className="overview-grid">
