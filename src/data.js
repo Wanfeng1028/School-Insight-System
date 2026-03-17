@@ -1,21 +1,21 @@
-export const metricCards = [
-  { label: "今日采集点数", value: "12,580", delta: "+12%", accent: "positive" },
-  { label: "活跃儿童 (Children)", value: "18", delta: "目标识别稳定", accent: "muted" },
-  { label: "活跃区域计数 (Active Zones)", value: "6", delta: "+2 高频区", accent: "warning" },
+锘縠xport const metricCards = [
+  { label: "\u4eca\u65e5\u91c7\u96c6\u70b9\u6570", value: "12,580", delta: "+12%", accent: "positive" },
+  { label: "\u6d3b\u8dc3\u513f\u7ae5 (Children)", value: "18", delta: "\u76ee\u6807\u8bc6\u522b\u7a33\u5b9a", accent: "muted" },
+  { label: "\u6d3b\u8dc3\u533a\u57df\u8ba1\u6570 (Active Zones)", value: "6", delta: "+2 \u9ad8\u9891\u533a", accent: "warning" },
 ];
 
 export const trendHours = ["08H", "10H", "12H", "14H", "16H", "18H"];
 export const trendValues = [820, 1080, 1490, 1210, 1810, 1320];
 
 export const zoneDurations = [
-  { name: "跑道", value: 42 },
-  { name: "教学楼", value: 68 },
-  { name: "沙池区", value: 96 },
-  { name: "游乐区", value: 77 },
+  { name: "\u8dd1\u9053", value: 42 },
+  { name: "\u6559\u5b66\u697c", value: 68 },
+  { name: "\u6c99\u6c60\u533a", value: 96 },
+  { name: "\u6e38\u4e50\u533a", value: 77 },
 ];
 
-export const logLevels = ["全部级别", "INFO", "DEBUG", "WARN"];
-export const logWindows = ["最近1小时", "最近6小时", "最近24小时"];
+export const logLevels = ["\u5168\u90e8\u7ea7\u522b", "INFO", "DEBUG", "WARN"];
+export const logWindows = ["\u6700\u8fd11\u5c0f\u65f6", "\u6700\u8fd16\u5c0f\u65f6", "\u6700\u8fd124\u5c0f\u65f6"];
 
 export const initialLogs = [
   { ts: "2026-03-17 10:20:01", level: "INFO", text: "System boot initiated | version 2.4.0-stable" },

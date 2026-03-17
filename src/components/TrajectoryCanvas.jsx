@@ -31,7 +31,8 @@ function TrajectoryCanvas({ tracks }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(0);
   const startRef = useRef(0);
-  const [fps, setFps] = useState(24);
+  const fpsRef = useRef(24);
+  const [, setFps] = useState(24);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -101,11 +102,12 @@ function TrajectoryCanvas({ tracks }) {
         ctx.fillStyle = "#d7dfef";
         ctx.font = "bold 11px Segoe UI";
         const textX = card.type === "online" ? 55 : 36;
-        ctx.fillText(card.type === "online" ? `FPS: ${fps} | POINTS: 8` : card.text, textX, 43 + index * 44);
+        ctx.fillText(card.type === "online" ? `FPS: ${fpsRef.current} | POINTS: 8` : card.text, textX, 43 + index * 44);
       });
 
       frameCounter += 1;
       if (ts - lastFpsTime >= 1000) {
+        fpsRef.current = frameCounter;
         setFps(frameCounter);
         frameCounter = 0;
         lastFpsTime = ts;
@@ -121,14 +123,14 @@ function TrajectoryCanvas({ tracks }) {
       cancelAnimationFrame(animationRef.current);
       startRef.current = 0;
     };
-  }, [tracks, fps]);
+  }, [tracks]);
 
   return (
     <div className="trajectory-stage">
       <canvas ref={canvasRef} className="trajectory-canvas" />
       <div className="stage-controls">
-        <button className="stage-button">?</button>
-        <button className="stage-button">?</button>
+        <button className="stage-button">CAM</button>
+        <button className="stage-button">CFG</button>
         <div className="stage-timeline" />
         <span>00:12:45 / 03:00:00</span>
       </div>

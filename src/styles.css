@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   color: #1b2b43;
   background: #eef3fb;
@@ -27,7 +27,7 @@ button { cursor: pointer; }
 .brand { display: flex; align-items: center; gap: 12px; padding: 0 24px 24px; font-weight: 700; font-size: 16px; }
 .brand-mark {
   width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(180deg, #3d83ff 0%, #245eea 100%);
-  display: grid; place-items: center; box-shadow: 0 10px 24px rgba(47, 109, 246, 0.24);
+  display: grid; place-items: center; box-shadow: 0 10px 24px rgba(47, 109, 246, 0.24); font-size: 12px;
 }
 .nav-list { display: flex; flex-direction: column; gap: 4px; }
 .nav-item {
@@ -68,10 +68,19 @@ button { cursor: pointer; }
 .help-dot { border: 1px solid #c9d3e6; color: #8ca0bf; font-size: 11px; }
 .signal-dot { background: #7ed957; }
 .monitor-grid, .overview-grid, .log-shell { padding: 28px; }
-.monitor-grid { display: grid; gap: 22px; }
+.monitor-grid { display: grid; gap: 18px; }
+.subnav-row { display: flex; gap: 10px; }
+.subnav-button {
+  height: 38px; min-width: 112px; border: 1px solid #d7e3f8; border-radius: 10px; background: #ffffff; color: #7a8ca8; font-weight: 700;
+}
+.subnav-button.active {
+  color: #ffffff; background: linear-gradient(180deg, #396fe8 0%, #2b63d7 100%); border-color: transparent; box-shadow: 0 12px 24px rgba(47, 109, 246, 0.18);
+}
+.upload-card, .track-card {
+  background: #ffffff; border-radius: 16px; box-shadow: 0 14px 40px rgba(100, 129, 174, 0.12);
+}
 .upload-card {
-  background: #ffffff; border-radius: 16px; min-height: 420px; box-shadow: 0 14px 40px rgba(100, 129, 174, 0.12);
-  padding: 44px 28px 30px; display: flex; flex-direction: column; align-items: center;
+  min-height: 760px; padding: 44px 28px 30px; display: flex; flex-direction: column; align-items: center;
 }
 .upload-placeholder { text-align: center; color: #6f82a0; max-width: 740px; }
 .upload-icon {
@@ -96,6 +105,12 @@ button { cursor: pointer; }
 .upload-tip { margin-top: 16px; padding: 8px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
 .upload-tip.success { background: rgba(22, 176, 90, 0.12); color: #16b05a; }
 .upload-tip.error { background: rgba(255, 126, 126, 0.14); color: #ff6c6c; }
+.track-card { padding: 18px; }
+.track-card-head {
+  display: flex; align-items: baseline; justify-content: space-between; padding: 4px 6px 14px; color: #6f82a0;
+}
+.track-card-head h2 { margin: 0; font-size: 16px; color: #152238; }
+.track-card-head span { font-size: 12px; }
 .trajectory-stage {
   position: relative; min-height: 786px; border-radius: 16px; overflow: hidden; box-shadow: 0 14px 40px rgba(100, 129, 174, 0.12);
 }
@@ -103,7 +118,7 @@ button { cursor: pointer; }
 .stage-controls {
   position: absolute; right: 30px; bottom: 22px; display: flex; align-items: center; gap: 14px; color: #dce3f3; font-size: 12px;
 }
-.stage-button { width: 46px; height: 46px; border: 0; border-radius: 8px; background: rgba(255, 255, 255, 0.08); color: #ffffff; }
+.stage-button { width: 46px; height: 46px; border: 0; border-radius: 8px; background: rgba(255, 255, 255, 0.08); color: #ffffff; font-size: 11px; font-weight: 700; }
 .stage-timeline { width: 1px; height: 30px; background: rgba(255, 255, 255, 0.24); }
 .metric-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; margin-bottom: 26px; }
 .metric-card, .panel-card, .log-toolbar, .log-viewer { background: #ffffff; border-radius: 16px; box-shadow: 0 14px 40px rgba(100, 129, 174, 0.09); }
@@ -164,5 +179,6 @@ button { cursor: pointer; }
   .nav-list { flex-direction: row; padding: 0 16px; }
   .sidebar-footer { display: none; }
   .log-toolbar { grid-template-columns: 1fr; }
+  .subnav-row { flex-wrap: wrap; }
   .topbar, .monitor-grid, .overview-grid, .log-shell { padding-left: 16px; padding-right: 16px; }
 }
