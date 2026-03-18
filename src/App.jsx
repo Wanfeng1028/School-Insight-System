@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
+import AuthBackground from "./components/AuthBackground";
 import BarChart from "./components/BarChart";
 import LineChart from "./components/LineChart";
 import TrajectoryCanvas from "./components/TrajectoryCanvas";
@@ -75,6 +76,7 @@ const UI = {
   refresh: "刷新",
   authTitle: "轨迹分析控制台",
   authSubtitle: "校园智能监控与实时轨迹分析中台",
+  authLead: "面向园区安防与行为分析场景的统一控制台，覆盖视频接入、目标绑定、轨迹回放、日志审计与概览统计。",
   login: "登录",
   register: "注册",
   forgotPassword: "忘记密码",
@@ -102,6 +104,18 @@ const navItems = [
   { key: "monitor", label: UI.navMonitor, icon: "M" },
   { key: "overview", label: UI.navOverview, icon: "S" },
   { key: "logs", label: UI.navLogs, icon: "L" },
+];
+
+const authHighlights = [
+  { value: "24h", label: "持续监控", detail: "视频接入、轨迹抽样与事件审计集中管理" },
+  { value: "6+", label: "区域模型", detail: "跑道、教学楼、沙池、游乐区等场景统一绑定" },
+  { value: "WS", label: "实时轨迹", detail: "接入 WebSocket 推流与动态 Canvas 绘制链路" },
+];
+
+const authFeatures = [
+  "登录、注册、忘记密码、重置密码一体化入口",
+  "支持批量视频绑定摄像头并进入实时轨迹监控",
+  "接入统计看板、事件日志与导出报告流程",
 ];
 
 const ALLOWED_SUFFIXES = [".mp4", ".avi", ".mov"];
@@ -192,10 +206,10 @@ function App() {
   const [windowFilter] = useState("最近1小时");
 
   const authView = {
-    login: { title: UI.login, action: UI.loginAction },
-    register: { title: UI.register, action: UI.registerAction },
-    forgot: { title: UI.forgotPassword, action: UI.forgotAction },
-    reset: { title: UI.resetPassword, action: UI.resetAction },
+    login: { title: UI.login, action: UI.loginAction, desc: "使用已有账号进入监控控制台。" },
+    register: { title: UI.register, action: UI.registerAction, desc: "创建新账号并自动进入系统。" },
+    forgot: { title: UI.forgotPassword, action: UI.forgotAction, desc: "通过邮箱生成短时重置令牌。" },
+    reset: { title: UI.resetPassword, action: UI.resetAction, desc: "输入令牌后设置新的登录密码。" },
   };
 
   const setSession = (nextToken, nextUser) => {
@@ -454,7 +468,7 @@ function App() {
       } else if (authMode === "forgot") {
         const data = await forgotPassword({ email: authForm.email });
         setAuthForm((current) => ({ ...current, resetToken: data.reset_token || current.resetToken }));
-        setAuthMessage(data.reset_token ? `重置令牌：${data.reset_token}，15 分钟内有效。` : "如果账号存在，重置令牌已生成。" );
+        setAuthMessage(data.reset_token ? `重置令牌：${data.reset_token}，15 分钟内有效。` : "如果账号存在，重置令牌已生成。");
         setAuthMode("reset");
       } else {
         if (authForm.password !== authForm.confirmPassword) {
@@ -487,83 +501,123 @@ function App() {
   const uploadTipClass = uploadState === "success" ? "success" : uploadState === "error" ? "error" : queue.length ? "success" : "error";
 
   if (booting) {
-    return <div className="auth-shell"><div className="auth-card compact"><h1>正在校验会话...</h1></div></div>;
+    return <div className="auth-shell"><AuthBackground /><div className="auth-card compact"><h1>正在校验会话...</h1></div></div>;
   }
 
   if (!token || !user) {
     return (
       <div className="auth-shell">
-        <div className="auth-card">
-          <div className="auth-brand">
-            <div className="brand-mark">SI</div>
-            <div>
-              <h1>{UI.authTitle}</h1>
-              <p>{UI.authSubtitle}</p>
+        <AuthBackground />
+        <div className="auth-card auth-card-wide">
+          <section className="auth-showcase">
+            <div className="auth-brand auth-brand-large">
+              <div className="brand-mark">SI</div>
+              <div>
+                <h1>{UI.authTitle}</h1>
+                <p>{UI.authSubtitle}</p>
+              </div>
             </div>
-          </div>
 
-          <div className="auth-tabs">
-            {["login", "register", "forgot", "reset"].map((key) => (
-              <button
-                key={key}
-                className={`auth-tab ${authMode === key ? "active" : ""}`}
-                onClick={() => {
-                  setAuthMode(key);
-                  setAuthError(false);
-                  setAuthMessage(key === "login" ? UI.authHint : "请填写表单后继续。");
-                }}
-                type="button"
-              >
-                {authView[key].title}
+            <p className="auth-lead">{UI.authLead}</p>
+
+            <div className="auth-highlight-grid">
+              {authHighlights.map((item) => (
+                <article className="auth-highlight-card" key={item.label}>
+                  <strong>{item.value}</strong>
+                  <span>{item.label}</span>
+                  <p>{item.detail}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="auth-feature-block">
+              <span className="auth-feature-eyebrow">核心能力</span>
+              <ul className="auth-feature-list">
+                {authFeatures.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="auth-demo-card">
+              <span>演示账号</span>
+              <strong>admin@school.local</strong>
+              <em>Admin12345</em>
+            </div>
+          </section>
+
+          <section className="auth-panel">
+            <div className="auth-panel-top">
+              <div>
+                <span className="auth-panel-kicker">身份入口</span>
+                <h2>{authView[authMode].title}</h2>
+                <p>{authView[authMode].desc}</p>
+              </div>
+            </div>
+
+            <div className="auth-tabs auth-tabs-compact">
+              {["login", "register", "forgot", "reset"].map((key) => (
+                <button
+                  key={key}
+                  className={`auth-tab ${authMode === key ? "active" : ""}`}
+                  onClick={() => {
+                    setAuthMode(key);
+                    setAuthError(false);
+                    setAuthMessage(key === "login" ? UI.authHint : "请填写表单后继续。");
+                  }}
+                  type="button"
+                >
+                  {authView[key].title}
+                </button>
+              ))}
+            </div>
+
+            <form className="auth-form auth-form-stack" onSubmit={handleAuthSubmit}>
+              {authMode === "register" && (
+                <label>
+                  <span>{UI.displayName}</span>
+                  <input value={authForm.name} onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))} />
+                </label>
+              )}
+
+              <label>
+                <span>{UI.email}</span>
+                <input type="email" value={authForm.email} onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))} />
+              </label>
+
+              {authMode === "reset" && (
+                <label>
+                  <span>{UI.tokenLabel}</span>
+                  <input value={authForm.resetToken} onChange={(event) => setAuthForm((current) => ({ ...current, resetToken: event.target.value }))} />
+                </label>
+              )}
+
+              {authMode !== "forgot" && (
+                <label>
+                  <span>{UI.password}</span>
+                  <input type="password" value={authForm.password} onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))} />
+                </label>
+              )}
+
+              {(authMode === "register" || authMode === "reset") && (
+                <label>
+                  <span>{UI.confirmPassword}</span>
+                  <input type="password" value={authForm.confirmPassword} onChange={(event) => setAuthForm((current) => ({ ...current, confirmPassword: event.target.value }))} />
+                </label>
+              )}
+
+              <button className="primary-button auth-submit" disabled={authBusy} type="submit">
+                {authBusy ? "处理中..." : authView[authMode].action}
               </button>
-            ))}
-          </div>
+            </form>
 
-          <form className="auth-form" onSubmit={handleAuthSubmit}>
-            {authMode === "register" && (
-              <label>
-                <span>{UI.displayName}</span>
-                <input value={authForm.name} onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))} />
-              </label>
-            )}
+            <div className={`auth-message ${authError ? "error" : "success"}`}>{authMessage}</div>
 
-            <label>
-              <span>{UI.email}</span>
-              <input type="email" value={authForm.email} onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))} />
-            </label>
-
-            {authMode === "reset" && (
-              <label>
-                <span>{UI.tokenLabel}</span>
-                <input value={authForm.resetToken} onChange={(event) => setAuthForm((current) => ({ ...current, resetToken: event.target.value }))} />
-              </label>
-            )}
-
-            {authMode !== "forgot" && (
-              <label>
-                <span>{UI.password}</span>
-                <input type="password" value={authForm.password} onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))} />
-              </label>
-            )}
-
-            {(authMode === "register" || authMode === "reset") && (
-              <label>
-                <span>{UI.confirmPassword}</span>
-                <input type="password" value={authForm.confirmPassword} onChange={(event) => setAuthForm((current) => ({ ...current, confirmPassword: event.target.value }))} />
-              </label>
-            )}
-
-            <button className="primary-button auth-submit" disabled={authBusy} type="submit">
-              {authBusy ? "处理中..." : authView[authMode].action}
-            </button>
-          </form>
-
-          <div className={`auth-message ${authError ? "error" : "success"}`}>{authMessage}</div>
-
-          <div className="auth-links">
-            <button type="button" onClick={() => setAuthMode("reset")}>{UI.switchToReset}</button>
-            <button type="button" onClick={() => setAuthMode("login")}>{UI.backToLogin}</button>
-          </div>
+            <div className="auth-links auth-links-split">
+              <button type="button" onClick={() => setAuthMode("reset")}>{UI.switchToReset}</button>
+              <button type="button" onClick={() => setAuthMode("login")}>{UI.backToLogin}</button>
+            </div>
+          </section>
         </div>
       </div>
     );
