@@ -1,4 +1,13 @@
-﻿export function normalizeTrackPayload(items) {
+﻿const DEFAULT_API_BASE = `${window.location.protocol === "https:" ? "https:" : "http:"}//${window.location.hostname || "127.0.0.1"}:8000`;
+const API_BASE = import.meta.env.VITE_API_BASE || DEFAULT_API_BASE;
+
+function getWebSocketBase(apiBase) {
+  const url = new URL(apiBase);
+  const protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${url.host}`;
+}
+
+export function normalizeTrackPayload(items) {
   return items.map((item) => ({
     id: item.id,
     color: item.color,
@@ -9,7 +18,7 @@
 
 export function connectTrackStream({ token, onMessage, onError }) {
   const query = token ? `?token=${encodeURIComponent(token)}` : "";
-  const socket = new WebSocket(`ws://127.0.0.1:8000/ws/tracks${query}`);
+  const socket = new WebSocket(`${getWebSocketBase(API_BASE)}/ws/tracks${query}`);
 
   socket.onmessage = (event) => {
     try {
@@ -28,3 +37,4 @@ export function connectTrackStream({ token, onMessage, onError }) {
 
   return socket;
 }
+

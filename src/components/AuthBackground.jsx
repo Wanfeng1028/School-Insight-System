@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -8,49 +8,91 @@ function lerp(start, end, factor) {
   return start + (end - start) * factor;
 }
 
-function angleDelta(a, b) {
-  let diff = a - b;
-  while (diff > Math.PI) diff -= Math.PI * 2;
-  while (diff < -Math.PI) diff += Math.PI * 2;
-  return diff;
+function smoothStep(edge0, edge1, value) {
+  const t = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+  return t * t * (3 - 2 * t);
 }
 
 function buildParticles(width, height) {
-  const dust = Array.from({ length: 240 }, () => ({
+  const dust = Array.from({ length: 420 }, () => ({
     x: Math.random() * width,
     y: Math.random() * height,
-    r: Math.random() * 0.85 + 0.18,
-    a: Math.random() * 0.24 + 0.05,
-    depth: Math.random() * 0.8 + 0.2,
+    r: Math.random() * 0.9 + 0.24,
+    a: Math.random() * 0.18 + 0.04,
+    depth: Math.random() * 0.9 + 0.25,
     seed: Math.random() * Math.PI * 2,
   }));
 
-  const rays = Array.from({ length: 160 }, (_, index) => ({
-    spread: -Math.PI * 0.6 + (index / 159) * Math.PI * 1.2 + (Math.random() - 0.5) * 0.03,
-    radius: 36 + Math.pow(Math.random(), 0.62) * Math.min(width, height) * 0.34,
-    length: 2 + Math.random() * 8,
-    width: Math.random() * 2.2 + 0.55,
-    alpha: Math.random() * 0.55 + 0.16,
-    hue: 214 + (index / 159) * 188,
-    drift: (Math.random() - 0.5) * 9,
-    seed: Math.random() * Math.PI * 2,
+  const rays = Array.from({ length: 280 }, (_, index) => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    angle: Math.random() * Math.PI * 2,
+    length: 5 + Math.random() * 18,
+    width: Math.random() * 1.8 + 0.55,
+    alpha: Math.random() * 0.34 + 0.12,
+    hue: 208 + (index / 279) * 172,
+    drift: 8 + Math.random() * 28,
+    orbit: 10 + Math.random() * 42,
     depth: Math.random() * 0.95 + 0.25,
+    seed: Math.random() * Math.PI * 2,
   }));
 
   return { dust, rays };
+}
+
+function getFieldCenters(width, height, t) {
+  return [
+    {
+      x: width * (0.2 + Math.sin(t * 0.06) * 0.08 + Math.cos(t * 0.11) * 0.03),
+      y: height * (0.24 + Math.cos(t * 0.05) * 0.08),
+      phase: t * 0.72,
+      weight: 1,
+    },
+    {
+      x: width * (0.78 + Math.cos(t * 0.05) * 0.07),
+      y: height * (0.3 + Math.sin(t * 0.07) * 0.09),
+      phase: t * 0.66 + 1.8,
+      weight: 1.1,
+    },
+    {
+      x: width * (0.52 + Math.sin(t * 0.04) * 0.06),
+      y: height * (0.74 + Math.cos(t * 0.06) * 0.07),
+      phase: t * 0.58 + 3.2,
+      weight: 0.95,
+    },
+  ];
+}
+
+function sampleField(x, y, centers, minSide) {
+  let shiftX = 0;
+  let shiftY = 0;
+  let energy = 0;
+
+  centers.forEach((center, index) => {
+    const dx = x - center.x;
+    const dy = y - center.y;
+    const distance = Math.hypot(dx, dy) || 1;
+    const ratio = clamp(distance / (minSide * 0.72), 0, 1.35);
+    const envelope = smoothStep(0.02, 0.92, ratio) * (1 - smoothStep(0.9, 1.28, ratio));
+    const radialWave = Math.sin(ratio * 8.4 - center.phase + index * 0.85);
+    const tangentialWave = Math.cos(ratio * 5.8 - center.phase * 0.8 + index * 0.65);
+    const strength = envelope * center.weight;
+    shiftX += (dx / distance) * radialWave * 24 * strength + (-dy / distance) * tangentialWave * 6.5 * strength;
+    shiftY += (dy / distance) * radialWave * 24 * strength + (dx / distance) * tangentialWave * 6.5 * strength;
+    energy += Math.abs(radialWave) * strength;
+  });
+
+  return {
+    shiftX,
+    shiftY,
+    energy: clamp(energy, 0, 1.8),
+  };
 }
 
 function AuthBackground() {
   const canvasRef = useRef(null);
   const animationRef = useRef(0);
   const particlesRef = useRef({ dust: [], rays: [] });
-  const pointerRef = useRef({
-    targetX: 0.7,
-    targetY: 0.52,
-    currentX: 0.7,
-    currentY: 0.52,
-    active: false,
-  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -68,34 +110,14 @@ function AuthBackground() {
       particlesRef.current = buildParticles(width, height);
     };
 
-    const handleMove = (event) => {
-      const width = window.innerWidth || 1;
-      const height = window.innerHeight || 1;
-      pointerRef.current.targetX = clamp(event.clientX / width, 0.06, 0.94);
-      pointerRef.current.targetY = clamp(event.clientY / height, 0.08, 0.92);
-      pointerRef.current.active = true;
-    };
-
-    const handleLeave = () => {
-      pointerRef.current.targetX = 0.7;
-      pointerRef.current.targetY = 0.52;
-      pointerRef.current.active = false;
-    };
-
     const draw = (time) => {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
+      const minSide = Math.min(width, height);
       const { dust, rays } = particlesRef.current;
       const t = time * 0.001;
-      const pointer = pointerRef.current;
-
-      pointer.currentX = lerp(pointer.currentX, pointer.targetX, pointer.active ? 0.11 : 0.04);
-      pointer.currentY = lerp(pointer.currentY, pointer.targetY, pointer.active ? 0.11 : 0.04);
-
-      const sourceX = width * pointer.currentX;
-      const sourceY = height * pointer.currentY;
-      const centerAngle = Math.atan2(sourceY - height * 0.5, sourceX - width * 0.5);
-      const fanStrength = pointer.active ? 1 : 0.7;
+      const centers = getFieldCenters(width, height, t);
+      const breathing = 0.56 + Math.sin(t * 0.48) * 0.16 + Math.cos(t * 0.21) * 0.08;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -106,34 +128,45 @@ function AuthBackground() {
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, width, height);
 
+      const wash = ctx.createRadialGradient(width * 0.52, height * 0.46, minSide * 0.08, width * 0.52, height * 0.46, minSide * 0.72);
+      wash.addColorStop(0, "rgba(111, 149, 255, 0.035)");
+      wash.addColorStop(0.5, "rgba(111, 149, 255, 0.018)");
+      wash.addColorStop(1, "rgba(111, 149, 255, 0)");
+      ctx.fillStyle = wash;
+      ctx.fillRect(0, 0, width, height);
+
       dust.forEach((dot, index) => {
-        const driftX = Math.sin(t * (0.12 + dot.depth * 0.03) + dot.seed + index * 0.02) * 0.85;
-        const driftY = Math.cos(t * (0.1 + dot.depth * 0.02) + dot.seed * 0.7) * 0.7;
-        const dx = dot.x - sourceX;
-        const dy = dot.y - sourceY;
-        const distance = Math.hypot(dx, dy) || 1;
-        const influence = Math.max(0, 1 - distance / (Math.min(width, height) * 0.28));
-        const push = influence * 18 * fanStrength * dot.depth;
+        const driftX = Math.sin(t * (0.06 + dot.depth * 0.012) + dot.seed + index * 0.01) * 0.7;
+        const driftY = Math.cos(t * (0.05 + dot.depth * 0.011) + dot.seed * 0.8) * 0.65;
+        const field = sampleField(dot.x, dot.y, centers, minSide);
+        const pageWave = Math.sin(dot.x / width * 4.2 + dot.y / height * 3.4 - t * 0.55 + dot.seed * 0.7);
+        const pageLift = Math.cos(dot.y / height * 4.8 - t * 0.44 + dot.seed) * 1.8;
+        const sizeWave = 1 + field.energy * 0.26 * breathing + Math.max(0, pageWave) * 0.12;
+
         ctx.beginPath();
-        ctx.fillStyle = `rgba(30, 45, 79, ${dot.a + influence * 0.05})`;
-        ctx.arc(dot.x + driftX + (dx / distance) * push, dot.y + driftY + (dy / distance) * push, dot.r * (1 + influence * 0.22), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(30, 45, 79, ${dot.a + field.energy * 0.03 + Math.max(0, pageWave) * 0.02})`;
+        ctx.arc(
+          dot.x + driftX + field.shiftX * (0.3 + dot.depth * 0.34) + pageWave * 1.6,
+          dot.y + driftY + field.shiftY * (0.3 + dot.depth * 0.34) + pageLift * dot.depth,
+          dot.r * sizeWave,
+          0,
+          Math.PI * 2,
+        );
         ctx.fill();
       });
 
       rays.forEach((ray, index) => {
-        const liveAngle = centerAngle + ray.spread + Math.sin(t * 0.5 + ray.seed) * 0.018;
-        const distanceBoost = 1 + Math.cos(ray.spread) * 0.18 * fanStrength;
-        const radius = (ray.radius + Math.sin(t * 0.42 + ray.seed + index * 0.02) * ray.drift) * distanceBoost;
-        const x = sourceX + Math.cos(liveAngle) * radius;
-        const y = sourceY + Math.sin(liveAngle) * radius;
-        const angleWeight = Math.max(0, 1 - Math.abs(ray.spread) / (Math.PI * 0.62));
-        const grow = 1 + angleWeight * 0.55 * fanStrength;
-        const lineLength = ray.length * grow;
-        const dx = Math.cos(liveAngle) * lineLength;
-        const dy = Math.sin(liveAngle) * lineLength;
+        const field = sampleField(ray.x, ray.y, centers, minSide);
+        const pageWave = Math.sin(ray.x / width * 3.8 + ray.y / height * 2.6 - t * 0.52 + ray.seed);
+        const orbitAngle = ray.angle + Math.sin(t * 0.18 + ray.seed) * 0.55 + field.energy * 0.22;
+        const x = ray.x + field.shiftX * (0.42 + ray.depth * 0.34) + Math.cos(t * 0.12 + ray.seed) * ray.orbit + pageWave * 10;
+        const y = ray.y + field.shiftY * (0.42 + ray.depth * 0.34) + Math.sin(t * 0.11 + ray.seed * 1.1) * (ray.orbit * 0.8) + pageWave * 8;
+        const lineLength = ray.length * (1 + field.energy * 0.52 * breathing + Math.max(0, pageWave) * 0.16);
+        const dx = Math.cos(orbitAngle) * lineLength;
+        const dy = Math.sin(orbitAngle) * lineLength;
 
-        ctx.strokeStyle = `hsla(${ray.hue}, 92%, 58%, ${ray.alpha})`;
-        ctx.lineWidth = ray.width * (1 + angleWeight * 0.22 * fanStrength);
+        ctx.strokeStyle = `hsla(${ray.hue}, 92%, 58%, ${Math.min(0.72, ray.alpha + field.energy * 0.12 + Math.max(0, pageWave) * 0.05)})`;
+        ctx.lineWidth = ray.width * (1 + field.energy * 0.18);
         ctx.lineCap = "round";
         ctx.beginPath();
         ctx.moveTo(x - dx, y - dy);
@@ -141,28 +174,24 @@ function AuthBackground() {
         ctx.stroke();
       });
 
-      const halo = ctx.createRadialGradient(sourceX, sourceY, 12, sourceX, sourceY, Math.min(width, height) * 0.18);
-      halo.addColorStop(0, "rgba(63, 117, 255, 0.08)");
-      halo.addColorStop(0.4, "rgba(63, 117, 255, 0.03)");
-      halo.addColorStop(1, "rgba(63, 117, 255, 0)");
-      ctx.fillStyle = halo;
-      ctx.fillRect(sourceX - 220, sourceY - 220, 440, 440);
+      centers.forEach((center, index) => {
+        const halo = ctx.createRadialGradient(center.x, center.y, 16, center.x, center.y, minSide * 0.28);
+        halo.addColorStop(0, `rgba(94, 132, 255, ${0.032 + index * 0.008})`);
+        halo.addColorStop(0.5, "rgba(94, 132, 255, 0.012)");
+        halo.addColorStop(1, "rgba(94, 132, 255, 0)");
+        ctx.fillStyle = halo;
+        ctx.fillRect(center.x - minSide * 0.28, center.y - minSide * 0.28, minSide * 0.56, minSide * 0.56);
+      });
 
       animationRef.current = requestAnimationFrame(draw);
     };
 
     resize();
     window.addEventListener("resize", resize);
-    window.addEventListener("pointermove", handleMove);
-    window.addEventListener("pointerleave", handleLeave);
-    window.addEventListener("blur", handleLeave);
     animationRef.current = requestAnimationFrame(draw);
 
     return () => {
       window.removeEventListener("resize", resize);
-      window.removeEventListener("pointermove", handleMove);
-      window.removeEventListener("pointerleave", handleLeave);
-      window.removeEventListener("blur", handleLeave);
       cancelAnimationFrame(animationRef.current);
     };
   }, []);

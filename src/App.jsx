@@ -1,8 +1,9 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AuthBackground from "./components/AuthBackground";
 import BarChart from "./components/BarChart";
 import LineChart from "./components/LineChart";
 import TrajectoryCanvas from "./components/TrajectoryCanvas";
+import VideoTrackingPlayer from "./components/VideoTrackingPlayer";
 import {
   initialLogs,
   logLevels,
@@ -25,8 +26,10 @@ import {
   logout,
   register,
   resetPassword,
+  runTrackingAnalysis,
   uploadBatch,
 } from "./hooks/api";
+import { API_BASE } from "./hooks/api";
 import { connectTrackStream } from "./hooks/realtime";
 
 const UI = {
@@ -37,6 +40,7 @@ const UI = {
   navLogs: "事件日志",
   subUpload: "视频绑定",
   subTrack: "轨迹画布",
+  subAnalyze: "视频追踪",
   logout: "退出登录",
   monitorTitle: "实时监控",
   monitorSubtitle: "2026年03月18日 - 实时视频轨迹分析",
@@ -62,6 +66,12 @@ const UI = {
   tooLarge: "存在超过 300MB 的文件，请移除后重试。",
   noData: "数据流：无数据",
   trackHint: "camera_id: 1 / buffer: ok / mode: realtime",
+  trackingStart: "开始分析",
+  trackingRunning: "追踪分析中...",
+  trackingDone: "人物追踪分析完成，已同步到视频叠加画面。",
+  trackingNeedVideo: "请先上传并绑定视频，再执行人物追踪分析。",
+  trackingPanelTitle: "视频追踪画面",
+  trackingPanelHint: "显示原画视频与人物追踪框叠加。",
   overviewTitle: "统计概览",
   exportReport: "导出报告",
   exporting: "导出中...",
@@ -164,7 +174,19 @@ function parseApiError(error) {
   if (text.includes("unsupported_file_type")) return UI.badType;
   if (text.includes("file_too_large")) return UI.tooLarge;
   if (text.includes("camera_ids_length_mismatch")) return "批量绑定数据不完整，请重新选择文件。";
+  if (text.includes("no_uploaded_videos")) return UI.trackingNeedVideo;
+  if (text.includes("video_not_found")) return "未找到可分析的视频。";
+  if (text.includes("yolo_unavailable")) return "后端 YOLO 推理不可用：请确认已安装 ultralytics/opencv，并且存在 backend/yolov8n.pt 模型文件。";
+  if (text.includes("network_error")) return "后端服务未启动、地址配置错误，或当前端口不可访问。";
   return "请求失败，请稍后重试。";
+}
+
+function resolveMediaUrl(url) {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const prefix = API_BASE.endsWith("/") ? API_BASE.slice(0, -1) : API_BASE;
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return `${prefix}${path}`;
 }
 
 function App() {
@@ -184,6 +206,10 @@ function App() {
   const [user, setUser] = useState(null);
   const [activePage, setActivePage] = useState("monitor");
   const [monitorMode, setMonitorMode] = useState("upload");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [analysisDetections, setAnalysisDetections] = useState([]);
+  const [analysisBusy, setAnalysisBusy] = useState(false);
+  const [analysisMessage, setAnalysisMessage] = useState("上传并绑定视频后，点击开始分析。");
   const [queue, setQueue] = useState([]);
   const [uploadState, setUploadState] = useState("idle");
   const [uploadMessage, setUploadMessage] = useState(UI.noData);
@@ -191,7 +217,7 @@ function App() {
   const [exporting, setExporting] = useState(false);
   const [tracks, setTracks] = useState(trackSeeds);
   const [wsLive, setWsLive] = useState(false);
-  const [health, setHealth] = useState({ api: false, redis: false, ws: false, stream_active: false, camera_id: "camera_id: 1", current_file: null });
+  const [health, setHealth] = useState({ api: false, redis: false, ws: false, stream_active: false, camera_id: "camera_id: 1", current_file: null, current_video_url: "", analysis_model: "待命" });
   const [overview, setOverview] = useState({
     metricCards: fallbackMetricCards,
     trendHours: fallbackTrendHours,
@@ -235,16 +261,20 @@ function App() {
           stream_active: !!data.stream_active,
           camera_id: data.camera_id || "camera_id: 1",
           current_file: data.current_file || null,
+          current_video_url: data.current_video_url || "",
+          analysis_model: data.analysis_model || "待命",
         });
         if (data.user) {
           setUser(data.user);
         }
+        setVideoUrl(resolveMediaUrl(data.current_video_url || ""));
       })
       .catch((error) => {
         if (String(error?.message || "").includes("invalid_token")) {
           clearSession();
         }
-        setHealth({ api: false, redis: false, ws: false, stream_active: false, camera_id: "camera_id: 1", current_file: null });
+        setHealth({ api: false, redis: false, ws: false, stream_active: false, camera_id: "camera_id: 1", current_file: null, current_video_url: "", analysis_model: "待命" });
+        setVideoUrl("");
       });
   };
 
@@ -427,12 +457,33 @@ function App() {
       );
       setUploadState("success");
       setUploadMessage(`${UI.uploadDone} 共 ${data.count} 个文件。`);
+      setAnalysisMessage("视频已绑定完成，可以开始人物追踪分析。");
       await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter)]);
       setMonitorMode("track");
     } catch (error) {
       setUploadState("error");
       setUploadMessage(parseApiError(error) || UI.uploadFailed);
       setQueue((current) => current.map((entry) => ({ ...entry, status: "error", message: "上传失败" })));
+    }
+  };
+
+
+
+  const handleTrackingAnalysis = async () => {
+    try {
+      setAnalysisBusy(true);
+      setAnalysisMessage(UI.trackingRunning);
+      const data = await runTrackingAnalysis(token, health.current_file || null);
+      setTracks(data.tracks || trackSeeds);
+      setAnalysisDetections(data.detections || []);
+      setVideoUrl(resolveMediaUrl(data.video_url || health.current_video_url || ""));
+      setMonitorMode("video");
+      setAnalysisMessage(UI.trackingDone + " 模型：" + (data.mode === "yolo" ? "YOLOv8" : "模拟"));
+      await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter)]);
+    } catch (error) {
+      setAnalysisMessage(parseApiError(error));
+    } finally {
+      setAnalysisBusy(false);
     }
   };
 
@@ -549,7 +600,6 @@ function App() {
           <section className="auth-panel">
             <div className="auth-panel-top">
               <div>
-                <span className="auth-panel-kicker">身份入口</span>
                 <h2>{authView[authMode].title}</h2>
                 <p>{authView[authMode].desc}</p>
               </div>
@@ -679,8 +729,21 @@ function App() {
 
             <section className="monitor-grid">
               <div className="subnav-row">
-                <button className={`subnav-button ${monitorMode === "upload" ? "active" : ""}`} onClick={() => setMonitorMode("upload")}>{UI.subUpload}</button>
-                <button className={`subnav-button ${monitorMode === "track" ? "active" : ""}`} onClick={() => setMonitorMode("track")}>{UI.subTrack}</button>
+                <div className="subnav-tabs">
+                  <button className={`subnav-button ${monitorMode === "upload" ? "active" : ""}`} onClick={() => setMonitorMode("upload")}>{UI.subUpload}</button>
+                  <button className={`subnav-button ${monitorMode === "track" ? "active" : ""}`} onClick={() => setMonitorMode("track")}>{UI.subTrack}</button>
+                  <button className={`subnav-button ${monitorMode === "video" ? "active" : ""}`} onClick={() => setMonitorMode("video")}>{UI.subAnalyze}</button>
+                </div>
+              </div>
+
+              <div className={`analysis-banner ${analysisBusy ? "busy" : ""}`}>
+                <div>
+                  <strong>人物追踪分析</strong>
+                  <span>{analysisMessage}</span>
+                </div>
+                <button className="analysis-trigger" onClick={handleTrackingAnalysis} disabled={analysisBusy}>
+                  {analysisBusy ? UI.trackingRunning : UI.trackingStart}
+                </button>
               </div>
 
               {monitorMode === "upload" ? (
@@ -748,14 +811,36 @@ function App() {
                   </button>
                   <div className={`upload-tip ${uploadTipClass}`}>{uploadMessage}</div>
                 </div>
-              ) : (
+              ) : monitorMode === "track" ? (
                 <div className="track-card">
                   <div className="track-card-head">
-                    <h2>{UI.monitorTitle}</h2>
-                    <span>{health.current_file ? `${health.camera_id} / ${health.current_file}` : UI.trackHint}</span>
+                    <h2>轨迹画布</h2>
+                    <span>{UI.trackHint}</span>
                   </div>
-                  <TrajectoryCanvas tracks={tracks} />
+                  <div className="trajectory-stage">
+                    <TrajectoryCanvas tracks={tracks} />
+                    <div className="stage-overlay">
+                      <div className={`stage-status ${wsLive ? "online" : "muted"}`}>
+                        <div className="stage-led" />
+                        <span>{wsLive ? UI.wsConnected : UI.wsFallback}</span>
+                      </div>
+                    </div>
+                    <div className="stage-controls">
+                      <span>实时轨迹</span>
+                      <div className="stage-timeline" />
+                      <button className="stage-button">LIVE</button>
+                    </div>
+                  </div>
                 </div>
+              ) : (
+                <VideoTrackingPlayer
+                  videoUrl={videoUrl}
+                  tracks={tracks}
+                  detections={analysisDetections}
+                  title={UI.trackingPanelTitle}
+                  meta={UI.trackingPanelHint}
+                  analysisBusy={analysisBusy}
+                />
               )}
             </section>
           </>
@@ -763,83 +848,136 @@ function App() {
 
         {activePage === "overview" && (
           <>
-            <header className="topbar topbar-plain">
-              <h1>{UI.overviewTitle}</h1>
-              <button className="outline-blue" onClick={handleExport} disabled={exporting}>{exporting ? UI.exporting : UI.exportReport}</button>
+            <header className="topbar">
+              <div>
+                <h1>{UI.overviewTitle}</h1>
+                <p className="topbar-inline">
+                  <span>{UI.updatedPrefix}：{lastUpdated}</span>
+                </p>
+              </div>
+              <div className="topbar-tags">
+                <button className="outline-blue" onClick={handleExport} disabled={exporting}>
+                  {exporting ? UI.exporting : UI.exportReport}
+                </button>
+              </div>
             </header>
 
             <section className="overview-grid">
+              <div className="overview-hero">
+                <div className="overview-hero-main">
+                  <span className="overview-kicker">校园智能监控</span>
+                  <h2>实时轨迹分析</h2>
+                  <strong>多摄像头接入 · 人物追踪 · 行为分析</strong>
+                  <p>基于 YOLOv8 深度学习模型的实时人物检测与轨迹追踪系统，支持多场景视频接入、目标绑定、轨迹回放与统计分析。</p>
+                </div>
+                <div className="overview-hero-pills">
+                  <div className="hero-pill positive">
+                    <div>
+                      <strong>实时监控</strong>
+                      <div>24小时在线</div>
+                    </div>
+                  </div>
+                  <div className="hero-pill warning">
+                    <div>
+                      <strong>智能分析</strong>
+                      <div>AI驱动检测</div>
+                    </div>
+                  </div>
+                  <div className="hero-pill info">
+                    <div>
+                      <strong>轨迹追踪</strong>
+                      <div>精准定位</div>
+                    </div>
+                  </div>
+                  <div className="hero-pill info">
+                    <div>
+                      <strong>数据统计</strong>
+                      <div>可视化报告</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="metric-row">
-                {overview.metricCards.map((card) => (
-                  <article className="metric-card" key={card.label}>
-                    <span className="metric-label">{card.label}</span>
+                {overview.metricCards.map((card, index) => (
+                  <div className="metric-card" key={index}>
+                    <div className="metric-label">{card.label}</div>
                     <div className="metric-main">
                       <strong>{card.value}</strong>
                       <em className={`metric-delta ${card.accent}`}>{card.delta}</em>
                     </div>
-                  </article>
+                  </div>
                 ))}
               </div>
 
-              <article className="panel-card">
+              <div className="panel-card">
                 <h3>{UI.trendTitle}</h3>
-                <LineChart hours={overview.trendHours} values={overview.trendValues} />
-              </article>
+                <div className="chart-host">
+                  <LineChart hours={overview.trendHours} values={overview.trendValues} />
+                </div>
+              </div>
 
-              <article className="panel-card side-panel">
+              <div className="panel-card side-panel">
                 <h3>{UI.zoneTitle}</h3>
-                <BarChart data={overview.zoneDurations} />
-              </article>
+                <div className="chart-host compact">
+                  <BarChart data={overview.zoneDurations} />
+                </div>
+              </div>
             </section>
           </>
         )}
 
         {activePage === "logs" && (
-          <>
+          <section className="log-shell">
             <header className="topbar topbar-plain">
-              <h1>{UI.logsTitle}</h1>
-              <div className="topbar-inline">
-                <span>{`${UI.updatedPrefix}: ${lastUpdated}`}</span>
-                <span className="signal-dot" />
+              <div>
+                <h1>{UI.logsTitle}</h1>
+                <p className="topbar-inline">
+                  <span>{UI.updatedPrefix}：{lastUpdated}</span>
+                </p>
               </div>
             </header>
 
-            <section className="log-shell">
-              <div className="log-toolbar">
-                <label className="search-box">
-                  <span>S</span>
-                  <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={UI.searchPlaceholder} />
-                </label>
-                <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value)}>
-                  {logLevels.map((item) => (
-                    <option key={item} value={item}>{item}</option>
-                  ))}
-                </select>
-                <select value={windowFilter} onChange={() => {}}>
-                  {logWindows.map((item) => (
-                    <option key={item} value={item}>{item}</option>
-                  ))}
-                </select>
-                <button className="refresh-button" onClick={refreshLogs}>{UI.refresh}</button>
+            <div className="log-toolbar">
+              <div className="search-box">
+                <span>🔍</span>
+                <input
+                  type="text"
+                  placeholder={UI.searchPlaceholder}
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
               </div>
+              <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value)}>
+                {logLevels.map((level) => (
+                  <option key={level} value={level}>{level}</option>
+                ))}
+              </select>
+              <select value={windowFilter} disabled>
+                {logWindows.map((window) => (
+                  <option key={window} value={window}>{window}</option>
+                ))}
+              </select>
+              <button className="refresh-button" onClick={refreshLogs}>{UI.refresh}</button>
+            </div>
 
-              <div className="log-viewer">
-                <div className="log-viewer-head">
-                  <span>System Log Viewer</span>
-                  <span>...</span>
-                </div>
-                <div className="log-list">
-                  {visibleLogs.map((log) => (
-                    <div className="log-row" key={`${log.ts}-${log.text}`}>
-                      <span className="log-time">[{log.ts}]</span>
-                      <span className={`log-level ${log.level.toLowerCase()}`}>{log.level}</span>
-                      <span className="log-text">{log.text}</span>
-                    </div>
-                  ))}
-                </div>
+            <div className="log-viewer">
+              <div className="log-viewer-head">
+                <span>时间戳</span>
+                <span>级别</span>
+                <span>事件描述</span>
               </div>
-            </section>
-          </>
+              <div className="log-list">
+                {visibleLogs.map((entry, index) => (
+                  <div className="log-row" key={index}>
+                    <div className="log-time">{entry.ts}</div>
+                    <div className={`log-level ${entry.level.toLowerCase()}`}>{entry.level}</div>
+                    <div className="log-text">{entry.text}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         )}
       </main>
     </div>
@@ -847,3 +985,11 @@ function App() {
 }
 
 export default App;
+
+
+
+
+
+
+
+

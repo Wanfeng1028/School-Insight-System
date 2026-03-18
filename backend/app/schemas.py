@@ -8,7 +8,7 @@ class MetricCard(BaseModel):
     label: str
     value: str
     delta: str
-    accent: Literal["positive", "muted", "warning"]
+    accent: Literal["positive", "muted", "warning", "info"]
 
 
 class ZoneDuration(BaseModel):
@@ -63,3 +63,7 @@ class ResetPasswordPayload(BaseModel):
     email: str
     token: str
     password: str
+
+
+class AnalysisPayload(BaseModel):
+    filename: str | None = None

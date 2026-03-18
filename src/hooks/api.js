@@ -1,4 +1,5 @@
-﻿const API_BASE = "http://127.0.0.1:8000";
+﻿const DEFAULT_API_BASE = `${window.location.protocol === "https:" ? "https:" : "http:"}//${window.location.hostname || "127.0.0.1"}:8000`;
+const API_BASE = import.meta.env.VITE_API_BASE || DEFAULT_API_BASE;
 
 function getHeaders(token, extra = {}) {
   const headers = { ...extra };
@@ -9,7 +10,12 @@ function getHeaders(token, extra = {}) {
 }
 
 async function requestJson(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, options);
+  let response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, options);
+  } catch {
+    throw new Error("network_error");
+  }
   if (!response.ok) {
     const text = await response.text();
     throw new Error(text || `Request failed: ${response.status}`);
@@ -87,6 +93,14 @@ export function fetchCameras(token) {
   });
 }
 
+export function runTrackingAnalysis(token, filename = null) {
+  return requestJson("/api/analysis/run", {
+    method: "POST",
+    headers: getHeaders(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify({ filename }),
+  });
+}
+
 export async function downloadReport(token) {
   const response = await fetch(`${API_BASE}/api/report`, {
     headers: getHeaders(token),
@@ -132,3 +146,5 @@ export function uploadBatch(entries, token) {
 }
 
 export { API_BASE };
+
+

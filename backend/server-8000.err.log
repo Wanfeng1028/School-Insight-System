@@ -1,0 +1,308 @@
+INFO:     Will watch for changes in these directories: ['E:\\code\\xxw\\School-Insight-System\\backend']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [1356] using WatchFiles
+INFO:     Started server process [26468]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     ('127.0.0.1', 64091) - "WebSocket /ws/tracks?token=dN4AJJ9LSTVHrBG0uWRx0Tom5PxHNBEG8EDk5L9YI6A" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     ('127.0.0.1', 55094) - "WebSocket /ws/tracks?token=dN4AJJ9LSTVHrBG0uWRx0Tom5PxHNBEG8EDk5L9YI6A" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     ('127.0.0.1', 64574) - "WebSocket /ws/tracks?token=dN4AJJ9LSTVHrBG0uWRx0Tom5PxHNBEG8EDk5L9YI6A" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     ('127.0.0.1', 64592) - "WebSocket /ws/tracks?token=a4-zmexJ5xmE91yTsUvIabPkoiREUbMz3ao_XZFNOpM" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     ('127.0.0.1', 64624) - "WebSocket /ws/tracks?token=a4-zmexJ5xmE91yTsUvIabPkoiREUbMz3ao_XZFNOpM" [accepted]
+INFO:     connection open
+INFO:     connection closed
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\utils\matching.py", line 10, in <module>
+    import lap  # for linear_assignment
+    ^^^^^^^^^^
+ModuleNotFoundError: No module named 'lap'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\applications.py", line 112, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 187, in __call__
+    raise exc
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 714, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 734, in app
+    await route.handle(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\fastapi\routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\fastapi\routing.py", line 214, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\concurrency.py", line 37, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\anyio\to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+  File "E:\code\xxw\School-Insight-System\backend\app\main.py", line 488, in run_analysis
+    append_log("INFO", f"Tracking analysis requested by {user['email']} for {record['filename']}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\app\analytics.py", line 138, in analyze_video_tracks
+    {
+  File "E:\code\xxw\School-Insight-System\backend\app\analytics.py", line 93, in try_yolo_tracks
+    while frame_count < 720:
+                 ^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\engine\model.py", line 577, in track
+    from ultralytics.trackers import register_tracker
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\__init__.py", line 3, in <module>
+    from .bot_sort import BOTSORT
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\bot_sort.py", line 15, in <module>
+    from .byte_tracker import BYTETracker, STrack
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\byte_tracker.py", line 12, in <module>
+    from .utils import matching
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\utils\matching.py", line 17, in <module>
+    import lap
+ModuleNotFoundError: No module named 'lap'
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\utils\matching.py", line 10, in <module>
+    import lap  # for linear_assignment
+    ^^^^^^^^^^
+ModuleNotFoundError: No module named 'lap'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\applications.py", line 112, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 187, in __call__
+    raise exc
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 714, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 734, in app
+    await route.handle(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\fastapi\routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\fastapi\routing.py", line 214, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\concurrency.py", line 37, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\anyio\to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+  File "E:\code\xxw\School-Insight-System\backend\app\main.py", line 488, in run_analysis
+    append_log("INFO", f"Tracking analysis requested by {user['email']} for {record['filename']}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\app\analytics.py", line 138, in analyze_video_tracks
+    {
+  File "E:\code\xxw\School-Insight-System\backend\app\analytics.py", line 93, in try_yolo_tracks
+    while frame_count < 720:
+                 ^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\engine\model.py", line 577, in track
+    from ultralytics.trackers import register_tracker
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\__init__.py", line 3, in <module>
+    from .bot_sort import BOTSORT
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\bot_sort.py", line 15, in <module>
+    from .byte_tracker import BYTETracker, STrack
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\byte_tracker.py", line 12, in <module>
+    from .utils import matching
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\utils\matching.py", line 17, in <module>
+    import lap
+ModuleNotFoundError: No module named 'lap'
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\utils\matching.py", line 10, in <module>
+    import lap  # for linear_assignment
+    ^^^^^^^^^^
+ModuleNotFoundError: No module named 'lap'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\applications.py", line 112, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 187, in __call__
+    raise exc
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 714, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 734, in app
+    await route.handle(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\fastapi\routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\fastapi\routing.py", line 214, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\starlette\concurrency.py", line 37, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\anyio\to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+  File "E:\code\xxw\School-Insight-System\backend\app\main.py", line 488, in run_analysis
+    append_log("INFO", f"Tracking analysis requested by {user['email']} for {record['filename']}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\app\analytics.py", line 138, in analyze_video_tracks
+    {
+  File "E:\code\xxw\School-Insight-System\backend\app\analytics.py", line 93, in try_yolo_tracks
+    while frame_count < 720:
+                 ^^^^^^^^^^^
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\engine\model.py", line 577, in track
+    from ultralytics.trackers import register_tracker
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\__init__.py", line 3, in <module>
+    from .bot_sort import BOTSORT
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\bot_sort.py", line 15, in <module>
+    from .byte_tracker import BYTETracker, STrack
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\byte_tracker.py", line 12, in <module>
+    from .utils import matching
+  File "E:\code\xxw\School-Insight-System\backend\.venv\Lib\site-packages\ultralytics\trackers\utils\matching.py", line 17, in <module>
+    import lap
+ModuleNotFoundError: No module named 'lap'
+forrtl: error (200): program aborting due to window-CLOSE event
+Image              PC                Routine            Line        Source             
+KERNELBASE.dll     00007FFAB85643A7  Unknown               Unknown  Unknown
+KERNEL32.DLL       00007FFAB9DD259D  Unknown               Unknown  Unknown
+ntdll.dll          00007FFABB5EAF78  Unknown               Unknown  Unknown

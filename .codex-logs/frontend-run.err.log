@@ -1,0 +1,683 @@
+[2m21:47:08[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Missing semicolon. (5:64)
+
+[0m [90m 3 |[31m [36mimport[31m [33mBarChart[31m [36mfrom[31m [32m"./components/BarChart"[31m[33m;[31m
+ [90m 4 |[31m [36mimport[31m [33mLineChart[31m [36mfrom[31m [32m"./components/LineChart"[31m[33m;[31m
+[31m[1m>[22m[31m[90m 5 |[31m [36mimport[31m [33mTrajectoryCanvas[31m [36mfrom[31m [32m"./components/TrajectoryCanvas"[31m[33m;[31m[32m`r`[31mnimport [33mVideoTrackingPlayer[31m [36mfrom[31m [32m"./components/VideoTrackingPlayer"[31m[33m;[31m
+ [90m   |[31m                                                                 [31m[1m^[22m[31m
+ [90m 6 |[31m [36mimport[31m {
+ [90m 7 |[31m   initialLogs[33m,[31m
+ [90m 8 |[31m   logLevels[33m,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:5:64
+[33m  3  |  import BarChart from "./components/BarChart";
+  4  |  import LineChart from "./components/LineChart";
+  5  |  import TrajectoryCanvas from "./components/TrajectoryCanvas";`r`nimport VideoTrackingPlayer from "./components/VideoTrackingPlayer";
+     |                                                                      ^
+  6  |  import {
+  7  |    initialLogs,[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.semicolon (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6895:10)
+      at JSXParserMixin.parseExpressionStatement (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13285:10)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12899:19)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m21:48:01[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Missing semicolon. (5:64)
+
+[0m [90m 3 |[31m [36mimport[31m [33mBarChart[31m [36mfrom[31m [32m"./components/BarChart"[31m[33m;[31m
+ [90m 4 |[31m [36mimport[31m [33mLineChart[31m [36mfrom[31m [32m"./components/LineChart"[31m[33m;[31m
+[31m[1m>[22m[31m[90m 5 |[31m [36mimport[31m [33mTrajectoryCanvas[31m [36mfrom[31m [32m"./components/TrajectoryCanvas"[31m[33m;[31m[32m`r`[31mnimport [33mVideoTrackingPlayer[31m [36mfrom[31m [32m"./components/VideoTrackingPlayer"[31m[33m;[31m
+ [90m   |[31m                                                                 [31m[1m^[22m[31m
+ [90m 6 |[31m [36mimport[31m {
+ [90m 7 |[31m   initialLogs[33m,[31m
+ [90m 8 |[31m   logLevels[33m,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:5:64
+[33m  3  |  import BarChart from "./components/BarChart";
+  4  |  import LineChart from "./components/LineChart";
+  5  |  import TrajectoryCanvas from "./components/TrajectoryCanvas";`r`nimport VideoTrackingPlayer from "./components/VideoTrackingPlayer";
+     |                                                                      ^
+  6  |  import {
+  7  |    initialLogs,[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.semicolon (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6895:10)
+      at JSXParserMixin.parseExpressionStatement (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13285:10)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12899:19)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m21:48:30[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Missing semicolon. (5:64)
+
+[0m [90m 3 |[31m [36mimport[31m [33mBarChart[31m [36mfrom[31m [32m"./components/BarChart"[31m[33m;[31m
+ [90m 4 |[31m [36mimport[31m [33mLineChart[31m [36mfrom[31m [32m"./components/LineChart"[31m[33m;[31m
+[31m[1m>[22m[31m[90m 5 |[31m [36mimport[31m [33mTrajectoryCanvas[31m [36mfrom[31m [32m"./components/TrajectoryCanvas"[31m[33m;[31m[32m`r`[31mnimport [33mVideoTrackingPlayer[31m [36mfrom[31m [32m"./components/VideoTrackingPlayer"[31m[33m;[31m
+ [90m   |[31m                                                                 [31m[1m^[22m[31m
+ [90m 6 |[31m [36mimport[31m {
+ [90m 7 |[31m   initialLogs[33m,[31m
+ [90m 8 |[31m   logLevels[33m,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:5:64
+[33m  3  |  import BarChart from "./components/BarChart";
+  4  |  import LineChart from "./components/LineChart";
+  5  |  import TrajectoryCanvas from "./components/TrajectoryCanvas";`r`nimport VideoTrackingPlayer from "./components/VideoTrackingPlayer";
+     |                                                                      ^
+  6  |  import {
+  7  |    initialLogs,[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.semicolon (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6895:10)
+      at JSXParserMixin.parseExpressionStatement (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13285:10)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12899:19)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m21:52:05[22m [31m[1m[vite][22m[39m Pre-transform error: E:\code\xxw\School-Insight-System\src\App.jsx: Missing semicolon. (5:64)
+
+[0m [90m 3 |[39m [36mimport[39m [33mBarChart[39m [36mfrom[39m [32m"./components/BarChart"[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLineChart[39m [36mfrom[39m [32m"./components/LineChart"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m [33mTrajectoryCanvas[39m [36mfrom[39m [32m"./components/TrajectoryCanvas"[39m[33m;[39m[32m`r`[39mnimport [33mVideoTrackingPlayer[39m [36mfrom[39m [32m"./components/VideoTrackingPlayer"[39m[33m;[39m
+ [90m   |[39m                                                                 [31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m {
+ [90m 7 |[39m   initialLogs[33m,[39m
+ [90m 8 |[39m   logLevels[33m,[39m[0m
+[2m21:52:05[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Missing semicolon. (5:64)
+
+[0m [90m 3 |[31m [36mimport[31m [33mBarChart[31m [36mfrom[31m [32m"./components/BarChart"[31m[33m;[31m
+ [90m 4 |[31m [36mimport[31m [33mLineChart[31m [36mfrom[31m [32m"./components/LineChart"[31m[33m;[31m
+[31m[1m>[22m[31m[90m 5 |[31m [36mimport[31m [33mTrajectoryCanvas[31m [36mfrom[31m [32m"./components/TrajectoryCanvas"[31m[33m;[31m[32m`r`[31mnimport [33mVideoTrackingPlayer[31m [36mfrom[31m [32m"./components/VideoTrackingPlayer"[31m[33m;[31m
+ [90m   |[31m                                                                 [31m[1m^[22m[31m
+ [90m 6 |[31m [36mimport[31m {
+ [90m 7 |[31m   initialLogs[33m,[31m
+ [90m 8 |[31m   logLevels[33m,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:5:64
+[33m  3  |  import BarChart from "./components/BarChart";
+  4  |  import LineChart from "./components/LineChart";
+  5  |  import TrajectoryCanvas from "./components/TrajectoryCanvas";`r`nimport VideoTrackingPlayer from "./components/VideoTrackingPlayer";
+     |                                                                      ^
+  6  |  import {
+  7  |    initialLogs,[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.semicolon (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6895:10)
+      at JSXParserMixin.parseExpressionStatement (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13285:10)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12899:19)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m21:52:14[22m [31m[1m[vite][22m[39m Pre-transform error: E:\code\xxw\School-Insight-System\src\App.jsx: Missing semicolon. (5:64)
+
+[0m [90m 3 |[39m [36mimport[39m [33mBarChart[39m [36mfrom[39m [32m"./components/BarChart"[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLineChart[39m [36mfrom[39m [32m"./components/LineChart"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m [33mTrajectoryCanvas[39m [36mfrom[39m [32m"./components/TrajectoryCanvas"[39m[33m;[39m[32m`r`[39mnimport [33mVideoTrackingPlayer[39m [36mfrom[39m [32m"./components/VideoTrackingPlayer"[39m[33m;[39m
+ [90m   |[39m                                                                 [31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m {
+ [90m 7 |[39m   initialLogs[33m,[39m
+ [90m 8 |[39m   logLevels[33m,[39m[0m
+[2m21:52:14[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Missing semicolon. (5:64)
+
+[0m [90m 3 |[31m [36mimport[31m [33mBarChart[31m [36mfrom[31m [32m"./components/BarChart"[31m[33m;[31m
+ [90m 4 |[31m [36mimport[31m [33mLineChart[31m [36mfrom[31m [32m"./components/LineChart"[31m[33m;[31m
+[31m[1m>[22m[31m[90m 5 |[31m [36mimport[31m [33mTrajectoryCanvas[31m [36mfrom[31m [32m"./components/TrajectoryCanvas"[31m[33m;[31m[32m`r`[31mnimport [33mVideoTrackingPlayer[31m [36mfrom[31m [32m"./components/VideoTrackingPlayer"[31m[33m;[31m
+ [90m   |[31m                                                                 [31m[1m^[22m[31m
+ [90m 6 |[31m [36mimport[31m {
+ [90m 7 |[31m   initialLogs[33m,[31m
+ [90m 8 |[31m   logLevels[33m,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:5:64
+[33m  3  |  import BarChart from "./components/BarChart";
+  4  |  import LineChart from "./components/LineChart";
+  5  |  import TrajectoryCanvas from "./components/TrajectoryCanvas";`r`nimport VideoTrackingPlayer from "./components/VideoTrackingPlayer";
+     |                                                                      ^
+  6  |  import {
+  7  |    initialLogs,[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.semicolon (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6895:10)
+      at JSXParserMixin.parseExpressionStatement (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13285:10)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12899:19)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m21:56:37[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Missing semicolon. (5:64)
+
+[0m [90m 3 |[31m [36mimport[31m [33mBarChart[31m [36mfrom[31m [32m"./components/BarChart"[31m[33m;[31m
+ [90m 4 |[31m [36mimport[31m [33mLineChart[31m [36mfrom[31m [32m"./components/LineChart"[31m[33m;[31m
+[31m[1m>[22m[31m[90m 5 |[31m [36mimport[31m [33mTrajectoryCanvas[31m [36mfrom[31m [32m"./components/TrajectoryCanvas"[31m[33m;[31m[32m`r`[31mnimport [33mVideoTrackingPlayer[31m [36mfrom[31m [32m"./components/VideoTrackingPlayer"[31m[33m;[31m
+ [90m   |[31m                                                                 [31m[1m^[22m[31m
+ [90m 6 |[31m [36mimport[31m {
+ [90m 7 |[31m   initialLogs[33m,[31m
+ [90m 8 |[31m   logLevels[33m,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:5:64
+[33m  3  |  import BarChart from "./components/BarChart";
+  4  |  import LineChart from "./components/LineChart";
+  5  |  import TrajectoryCanvas from "./components/TrajectoryCanvas";`r`nimport VideoTrackingPlayer from "./components/VideoTrackingPlayer";
+     |                                                                      ^
+  6  |  import {
+  7  |    initialLogs,[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.semicolon (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6895:10)
+      at JSXParserMixin.parseExpressionStatement (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13285:10)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12899:19)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m21:57:58[22m [31m[1m[vite][22m[39m Pre-transform error: E:\code\xxw\School-Insight-System\src\App.jsx: Missing semicolon. (6:70)
+
+[0m [90m 4 |[39m [36mimport[39m [33mLineChart[39m [36mfrom[39m [32m"./components/LineChart"[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m [33mTrajectoryCanvas[39m [36mfrom[39m [32m"./components/TrajectoryCanvas"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m [33mVideoTrackingPlayer[39m [36mfrom[39m [32m"./components/VideoTrackingPlayer"[39m[33m;[39m[32m`r`[39mnimport [33mVideoTrackingPlayer[39m [36mfrom[39m [32m"./components/VideoTrackingPlayer"[39m[33m;[39m
+ [90m   |[39m                                                                       [31m[1m^[22m[39m
+ [90m 7 |[39m [36mimport[39m {
+ [90m 8 |[39m   initialLogs[33m,[39m
+ [90m 9 |[39m   logLevels[33m,[39m[0m
+[2m21:57:58[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Missing semicolon. (6:70)
+
+[0m [90m 4 |[31m [36mimport[31m [33mLineChart[31m [36mfrom[31m [32m"./components/LineChart"[31m[33m;[31m
+ [90m 5 |[31m [36mimport[31m [33mTrajectoryCanvas[31m [36mfrom[31m [32m"./components/TrajectoryCanvas"[31m[33m;[31m
+[31m[1m>[22m[31m[90m 6 |[31m [36mimport[31m [33mVideoTrackingPlayer[31m [36mfrom[31m [32m"./components/VideoTrackingPlayer"[31m[33m;[31m[32m`r`[31mnimport [33mVideoTrackingPlayer[31m [36mfrom[31m [32m"./components/VideoTrackingPlayer"[31m[33m;[31m
+ [90m   |[31m                                                                       [31m[1m^[22m[31m
+ [90m 7 |[31m [36mimport[31m {
+ [90m 8 |[31m   initialLogs[33m,[31m
+ [90m 9 |[31m   logLevels[33m,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:6:70
+[33m  4  |  import LineChart from "./components/LineChart";
+  5  |  import TrajectoryCanvas from "./components/TrajectoryCanvas";
+  6  |  import VideoTrackingPlayer from "./components/VideoTrackingPlayer";`r`nimport VideoTrackingPlayer from "./components/VideoTrackingPlayer";
+     |                                                                            ^
+  7  |  import {
+  8  |    initialLogs,[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.semicolon (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6895:10)
+      at JSXParserMixin.parseExpressionStatement (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13285:10)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12899:19)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m22:17:40[22m [31m[1m[vite][22m[39m Pre-transform error: E:\code\xxw\School-Insight-System\src\App.jsx: Unexpected token (28:16)
+
+[0m [90m 26 |[39m   logout[33m,[39m
+ [90m 27 |[39m   register[33m,[39m
+[31m[1m>[22m[39m[90m 28 |[39m   resetPassword[33m,[39m[32m`r`[39mn  runTrackingAnalysis[33m,[39m[32m`r`[39mn  uploadBatch[33m,[39m
+ [90m    |[39m                 [31m[1m^[22m[39m
+ [90m 29 |[39m } [36mfrom[39m [32m"./hooks/api"[39m[33m;[39m
+ [90m 30 |[39m [36mimport[39m { connectTrackStream } [36mfrom[39m [32m"./hooks/realtime"[39m[33m;[39m
+ [90m 31 |[39m[0m
+[2m22:17:40[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Unexpected token (28:16)
+
+[0m [90m 26 |[31m   logout[33m,[31m
+ [90m 27 |[31m   register[33m,[31m
+[31m[1m>[22m[31m[90m 28 |[31m   resetPassword[33m,[31m[32m`r`[31mn  runTrackingAnalysis[33m,[31m[32m`r`[31mn  uploadBatch[33m,[31m
+ [90m    |[31m                 [31m[1m^[22m[31m
+ [90m 29 |[31m } [36mfrom[31m [32m"./hooks/api"[31m[33m;[31m
+ [90m 30 |[31m [36mimport[31m { connectTrackStream } [36mfrom[31m [32m"./hooks/realtime"[31m[33m;[31m
+ [90m 31 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:28:16
+[33m  26 |    logout,
+  27 |    register,
+  28 |    resetPassword,`r`n  runTrackingAnalysis,`r`n  uploadBatch,
+     |                                             ^
+  29 |  } from "./hooks/api";
+  30 |  import { connectTrackStream } from "./hooks/realtime";[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.unexpected (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6619:16)
+      at JSXParserMixin.parseIdentifierName (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12203:12)
+      at JSXParserMixin.parseIdentifier (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12181:23)
+      at JSXParserMixin.parseModuleExportName (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14123:17)
+      at JSXParserMixin.parseNamedImportSpecifiers (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14397:33)
+      at JSXParserMixin.parseImportSpecifiersAndAfter (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14242:37)
+      at JSXParserMixin.parseImport (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14235:17)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12876:27)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m22:17:41[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Unexpected token (28:16)
+
+[0m [90m 26 |[31m   logout[33m,[31m
+ [90m 27 |[31m   register[33m,[31m
+[31m[1m>[22m[31m[90m 28 |[31m   resetPassword[33m,[31m[32m`r`[31mn  runTrackingAnalysis[33m,[31m[32m`r`[31mn  uploadBatch[33m,[31m
+ [90m    |[31m                 [31m[1m^[22m[31m
+ [90m 29 |[31m } [36mfrom[31m [32m"./hooks/api"[31m[33m;[31m
+ [90m 30 |[31m [36mimport[31m { connectTrackStream } [36mfrom[31m [32m"./hooks/realtime"[31m[33m;[31m
+ [90m 31 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:28:16
+[33m  26 |    logout,
+  27 |    register,
+  28 |    resetPassword,`r`n  runTrackingAnalysis,`r`n  uploadBatch,
+     |                                             ^
+  29 |  } from "./hooks/api";
+  30 |  import { connectTrackStream } from "./hooks/realtime";[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.unexpected (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6619:16)
+      at JSXParserMixin.parseIdentifierName (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12203:12)
+      at JSXParserMixin.parseIdentifier (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12181:23)
+      at JSXParserMixin.parseModuleExportName (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14123:17)
+      at JSXParserMixin.parseNamedImportSpecifiers (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14397:33)
+      at JSXParserMixin.parseImportSpecifiersAndAfter (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14242:37)
+      at JSXParserMixin.parseImport (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14235:17)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12876:27)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m22:17:54[22m [31m[1m[vite][22m[39m Pre-transform error: E:\code\xxw\School-Insight-System\src\App.jsx: Unexpected token (28:16)
+
+[0m [90m 26 |[39m   logout[33m,[39m
+ [90m 27 |[39m   register[33m,[39m
+[31m[1m>[22m[39m[90m 28 |[39m   resetPassword[33m,[39m[32m`r`[39mn  runTrackingAnalysis[33m,[39m[32m`r`[39mn  uploadBatch[33m,[39m
+ [90m    |[39m                 [31m[1m^[22m[39m
+ [90m 29 |[39m } [36mfrom[39m [32m"./hooks/api"[39m[33m;[39m
+ [90m 30 |[39m [36mimport[39m { connectTrackStream } [36mfrom[39m [32m"./hooks/realtime"[39m[33m;[39m
+ [90m 31 |[39m[0m
+[2m22:17:54[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Unexpected token (28:16)
+
+[0m [90m 26 |[31m   logout[33m,[31m
+ [90m 27 |[31m   register[33m,[31m
+[31m[1m>[22m[31m[90m 28 |[31m   resetPassword[33m,[31m[32m`r`[31mn  runTrackingAnalysis[33m,[31m[32m`r`[31mn  uploadBatch[33m,[31m
+ [90m    |[31m                 [31m[1m^[22m[31m
+ [90m 29 |[31m } [36mfrom[31m [32m"./hooks/api"[31m[33m;[31m
+ [90m 30 |[31m [36mimport[31m { connectTrackStream } [36mfrom[31m [32m"./hooks/realtime"[31m[33m;[31m
+ [90m 31 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:28:16
+[33m  26 |    logout,
+  27 |    register,
+  28 |    resetPassword,`r`n  runTrackingAnalysis,`r`n  uploadBatch,
+     |                                             ^
+  29 |  } from "./hooks/api";
+  30 |  import { connectTrackStream } from "./hooks/realtime";[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.unexpected (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6619:16)
+      at JSXParserMixin.parseIdentifierName (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12203:12)
+      at JSXParserMixin.parseIdentifier (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12181:23)
+      at JSXParserMixin.parseModuleExportName (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14123:17)
+      at JSXParserMixin.parseNamedImportSpecifiers (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14397:33)
+      at JSXParserMixin.parseImportSpecifiersAndAfter (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14242:37)
+      at JSXParserMixin.parseImport (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14235:17)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12876:27)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m22:30:15[22m [31m[1m[vite][22m[39m Pre-transform error: E:\code\xxw\School-Insight-System\src\App.jsx: Unterminated string constant. (984:4)
+
+[0m [90m 982 |[39m     [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m 983 |[39m   )[33m;[39m
+[31m[1m>[22m[39m[90m 984 |[39m }ard[32m">[39m
+ [90m     |[39m     [31m[1m^[22m[39m
+ [90m 985 |[39m                   [33m<[39m[33mdiv[39m className[33m=[39m[32m"track-card-head"[39m[33m>[39m
+ [90m 986 |[39m                     [33m<[39m[33mh2[39m[33m>[39m{[33mUI[39m[33m.[39mmonitorTitle}[33m<[39m[33m/[39m[33mh2[39m[33m>[39m
+ [90m 987 |[39m                     [33m<[39m[33mspan[39m[33m>[39m{health[33m.[39mcurrent_file [33m?[39m [32m`${health.camera_id} / ${health.current_file}`[39m [33m:[39m [33mUI[39m[33m.[39mtrackHint}[33m<[39m[33m/[39m[33mspan[39m[33m>[39m[0m
+[2m22:30:15[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Unterminated string constant. (984:4)
+
+[0m [90m 982 |[31m     [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m 983 |[31m   )[33m;[31m
+[31m[1m>[22m[31m[90m 984 |[31m }ard[32m">[31m
+ [90m     |[31m     [31m[1m^[22m[31m
+ [90m 985 |[31m                   [33m<[31m[33mdiv[31m className[33m=[31m[32m"track-card-head"[31m[33m>[31m
+ [90m 986 |[31m                     [33m<[31m[33mh2[31m[33m>[31m{[33mUI[31m[33m.[31mmonitorTitle}[33m<[31m[33m/[31m[33mh2[31m[33m>[31m
+ [90m 987 |[31m                     [33m<[31m[33mspan[31m[33m>[31m{health[33m.[31mcurrent_file [33m?[31m [32m`${health.camera_id} / ${health.current_file}`[31m [33m:[31m [33mUI[31m[33m.[31mtrackHint}[33m<[31m[33m/[31m[33mspan[31m[33m>[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:984:4
+[33m  1005|                  {overview.metricCards.map((card) => (
+  1006|                    <article className="metric-card" key={card.label}>
+  1007|                      <span className="metric-label">{card.label}</span>
+     |                                                                 ^
+  1008|                      <div className="metric-main">
+  1009|                        <strong>{card.value}</strong>[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at Object.unterminated (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:5664:20)
+      at readStringContents (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:5406:16)
+      at JSXParserMixin.readString (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6498:9)
+      at JSXParserMixin.getTokenFromCode (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6258:14)
+      at JSXParserMixin.getTokenFromCode (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:4797:11)
+      at JSXParserMixin.nextToken (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:5782:10)
+      at JSXParserMixin.next (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:5692:10)
+      at JSXParserMixin.parseIdentifierName (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12213:10)
+      at JSXParserMixin.parseIdentifier (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12181:23)
+      at JSXParserMixin.parseExprAtom (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:11416:27)
+      at JSXParserMixin.parseExprAtom (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10784:23)
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12421:16)
+      at JSXParserMixin.parseExpression (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12895:23)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+[2m22:30:20[22m [31m[1m[vite][22m[39m Pre-transform error: E:\code\xxw\School-Insight-System\src\App.jsx: Unterminated string constant. (984:4)
+
+[0m [90m 982 |[39m     [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m 983 |[39m   )[33m;[39m
+[31m[1m>[22m[39m[90m 984 |[39m }ard[32m">[39m
+ [90m     |[39m     [31m[1m^[22m[39m
+ [90m 985 |[39m                   [33m<[39m[33mdiv[39m className[33m=[39m[32m"track-card-head"[39m[33m>[39m
+ [90m 986 |[39m                     [33m<[39m[33mh2[39m[33m>[39m{[33mUI[39m[33m.[39mmonitorTitle}[33m<[39m[33m/[39m[33mh2[39m[33m>[39m
+ [90m 987 |[39m                     [33m<[39m[33mspan[39m[33m>[39m{health[33m.[39mcurrent_file [33m?[39m [32m`${health.camera_id} / ${health.current_file}`[39m [33m:[39m [33mUI[39m[33m.[39mtrackHint}[33m<[39m[33m/[39m[33mspan[39m[33m>[39m[0m
+[2m22:30:20[22m [31m[1m[vite][22m[39m [31mInternal server error: E:\code\xxw\School-Insight-System\src\App.jsx: Unterminated string constant. (984:4)
+
+[0m [90m 982 |[31m     [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m 983 |[31m   )[33m;[31m
+[31m[1m>[22m[31m[90m 984 |[31m }ard[32m">[31m
+ [90m     |[31m     [31m[1m^[22m[31m
+ [90m 985 |[31m                   [33m<[31m[33mdiv[31m className[33m=[31m[32m"track-card-head"[31m[33m>[31m
+ [90m 986 |[31m                     [33m<[31m[33mh2[31m[33m>[31m{[33mUI[31m[33m.[31mmonitorTitle}[33m<[31m[33m/[31m[33mh2[31m[33m>[31m
+ [90m 987 |[31m                     [33m<[31m[33mspan[31m[33m>[31m{health[33m.[31mcurrent_file [33m?[31m [32m`${health.camera_id} / ${health.current_file}`[31m [33m:[31m [33mUI[31m[33m.[31mtrackHint}[33m<[31m[33m/[31m[33mspan[31m[33m>[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mE:/code/xxw/School-Insight-System/src/App.jsx[39m:984:4
+[33m  1005|                  {overview.metricCards.map((card) => (
+  1006|                    <article className="metric-card" key={card.label}>
+  1007|                      <span className="metric-label">{card.label}</span>
+     |                                                                 ^
+  1008|                      <div className="metric-main">
+  1009|                        <strong>{card.value}</strong>[39m
+      at constructor (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6599:19)
+      at Object.unterminated (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:5664:20)
+      at readStringContents (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:5406:16)
+      at JSXParserMixin.readString (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6498:9)
+      at JSXParserMixin.getTokenFromCode (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:6258:14)
+      at JSXParserMixin.getTokenFromCode (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:4797:11)
+      at JSXParserMixin.nextToken (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:5782:10)
+      at JSXParserMixin.next (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:5692:10)
+      at JSXParserMixin.parseIdentifierName (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12213:10)
+      at JSXParserMixin.parseIdentifier (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12181:23)
+      at JSXParserMixin.parseExprAtom (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:11416:27)
+      at JSXParserMixin.parseExprAtom (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10784:23)
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12421:16)
+      at JSXParserMixin.parseExpression (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.parseStatementContent (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12895:23)
+      at JSXParserMixin.parseStatementLike (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:13309:10)
+      at JSXParserMixin.parseProgram (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:12612:25)
+      at JSXParserMixin.parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14488:25)
+      at parse (E:\code\xxw\School-Insight-System\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:261:32)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:189:28
+      at E:\code\xxw\School-Insight-System\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:113:33
+      at step (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:287:14)
+      at E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (E:\code\xxw\School-Insight-System\node_modules\gensync\index.js:223:11)
+^C

@@ -1,0 +1,20 @@
+INFO:     127.0.0.1:54561 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54561 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54561 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54561 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54561 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54561 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54561 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54561 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54561 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54584 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54586 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54028 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54028 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54028 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54028 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54028 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54028 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54028 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54028 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:60950 - "OPTIONS /api/auth/login HTTP/1.1" 400 Bad Request

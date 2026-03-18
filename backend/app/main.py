@@ -1,6 +1,7 @@
-﻿import asyncio
+import asyncio
 import hashlib
 import json
+import math
 import secrets
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -9,11 +10,13 @@ from uuid import uuid4
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from fastapi.staticfiles import StaticFiles
 
+from .analytics import analyze_video_tracks
 from .mock_data import LOGS, OVERVIEW_DATA, TRACKS
-from .schemas import ForgotPasswordPayload, LoginPayload, RegisterPayload, ResetPasswordPayload
+from .schemas import AnalysisPayload, ForgotPasswordPayload, LoginPayload, RegisterPayload, ResetPasswordPayload, TrackFrame
 
-app = FastAPI(title="School Insight System API", version="0.2.0")
+app = FastAPI(title="School Insight System API", version="0.3.0")
 ROOT = Path(__file__).resolve().parents[1]
 UPLOAD_DIR = ROOT / "uploads"
 DATA_DIR = ROOT / "data"
@@ -25,6 +28,7 @@ MAX_UPLOAD_SIZE = 300 * 1024 * 1024
 RESET_TOKEN_MINUTES = 15
 SESSION_TOKENS: dict[str, dict] = {}
 RESET_TOKENS: dict[str, dict] = {}
+UPLOADED_VIDEOS: list[dict] = []
 CAMERAS = [
     {"id": "camera_id: 1", "name": "北门通道"},
     {"id": "camera_id: 2", "name": "操场跑道"},
@@ -36,7 +40,15 @@ CAMERAS = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+    ],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,8 +61,17 @@ STATE = {
     "stream_active": False,
     "camera_id": "camera_id: 1",
     "current_file": None,
+    "current_file_path": None,
+    "current_stored_as": None,
     "bind_count": 0,
     "last_batch_size": 0,
+    "analysis_active": False,
+    "analysis_model": "待命",
+    "tracked_targets": 0,
+    "frames_processed": 0,
+    "avg_confidence": 0.0,
+    "alert_count": 3,
+    "last_analysis_file": None,
 }
 
 
@@ -60,6 +81,12 @@ def now_iso() -> str:
 
 def append_log(level: str, text: str):
     LOGS.append({"ts": now_iso(), "level": level, "text": text})
+
+def current_video_url(stored_as: str | None) -> str | None:
+    if not stored_as:
+        return None
+    # Return same-origin relative URL so frontend can resolve with API base.
+    return f"/uploads/{stored_as}"
 
 
 def normalize_email(email: str) -> str:
@@ -153,17 +180,61 @@ def require_auth(authorization: str | None) -> dict:
     return get_current_user(authorization)
 
 
+def active_track_count() -> int:
+    return max(STATE["tracked_targets"], len(TRACKS))
+
+
+def total_track_points() -> int:
+    return sum(len(track.points) for track in TRACKS)
+
+
+def unique_camera_count() -> int:
+    return len({item["camera_id"] for item in UPLOADED_VIDEOS}) or 1
+
+
+def route_distance() -> float:
+    total = 0.0
+    for track in TRACKS:
+        for start, end in zip(track.points, track.points[1:]):
+            total += math.dist(start, end)
+    return total
+
+
+def build_metric_cards() -> list[dict]:
+    bind_total = len(UPLOADED_VIDEOS)
+    targets = active_track_count()
+    confidence = STATE["avg_confidence"] * 100 if STATE["avg_confidence"] <= 1 else STATE["avg_confidence"]
+    model_name = "YOLOv8 跟踪" if STATE["analysis_model"] == "yolo" else "模拟回放" if STATE["analysis_model"] == "simulation" else "待命"
+    hotspot_count = 6 + min(bind_total, 4) + (1 if targets >= 5 else 0)
+    cards = [
+        {"label": "今日采集点数", "value": f"{12580 + STATE['bind_count'] * 120 + total_track_points() * 6:,}", "delta": "+12.4%", "accent": "positive"},
+        {"label": "活跃目标数", "value": str(targets or 18), "delta": "轨迹已同步", "accent": "info"},
+        {"label": "高频区域", "value": str(hotspot_count), "delta": "+2 热区", "accent": "warning"},
+        {"label": "已绑定视频", "value": str(bind_total), "delta": f"最近批量 {STATE['last_batch_size']} 个", "accent": "muted"},
+        {"label": "在线摄像头", "value": str(unique_camera_count()), "delta": "接入主通道", "accent": "positive"},
+        {"label": "平均跟踪置信度", "value": f"{confidence:.1f}%", "delta": "人物检测稳定", "accent": "positive"},
+        {"label": "轨迹点位总数", "value": f"{total_track_points():,}", "delta": f"处理帧 {STATE['frames_processed']}", "accent": "info"},
+        {"label": "异常预警数", "value": str(STATE['alert_count']), "delta": "待人工复核", "accent": "warning"},
+        {"label": "分析模型", "value": model_name, "delta": STATE['last_analysis_file'] or "未执行分析", "accent": "muted"},
+    ]
+    return cards
+
+
+def build_zone_durations() -> list[dict]:
+    offset = max(active_track_count(), 1)
+    base = [42, 68, 96, 77, 54]
+    names = ["跑道", "教学楼", "沙池区", "游乐区", "校车点"]
+    return [{"name": name, "value": value + offset * (index + 1)} for index, (name, value) in enumerate(zip(names, base))]
+
+
 def build_overview_payload():
-    metric_cards = [card.model_dump() for card in OVERVIEW_DATA.metric_cards]
-    metric_cards[0]["value"] = f"{12580 + STATE['bind_count'] * 120:,}"
-    metric_cards[1]["value"] = str(18 + min(STATE["bind_count"], 7))
-    metric_cards[1]["delta"] = "已绑定视频" if STATE["current_file"] else metric_cards[1]["delta"]
-    metric_cards[2]["delta"] = f"+{2 + STATE['bind_count']} 高频区"
+    seed_values = OVERVIEW_DATA.trend_values
+    dynamic_bump = STATE["bind_count"] * 15 + total_track_points() * 2
     return {
-        "metric_cards": metric_cards,
+        "metric_cards": build_metric_cards(),
         "trend_hours": OVERVIEW_DATA.trend_hours,
-        "trend_values": [value + STATE["bind_count"] * 15 for value in OVERVIEW_DATA.trend_values],
-        "zone_durations": [zone.model_dump() for zone in OVERVIEW_DATA.zone_durations],
+        "trend_values": [value + dynamic_bump + index * active_track_count() * 3 for index, value in enumerate(seed_values)],
+        "zone_durations": build_zone_durations(),
     }
 
 
@@ -177,6 +248,9 @@ def json_report_bytes() -> bytes:
             "stream_active": STATE["stream_active"],
             "camera_id": STATE["camera_id"],
             "current_file": STATE["current_file"],
+            "current_video_url": current_video_url(STATE["current_stored_as"]),
+            "analysis_model": STATE["analysis_model"],
+            "tracked_targets": STATE["tracked_targets"],
         },
         "overview": build_overview_payload(),
         "recent_logs": [entry if isinstance(entry, dict) else entry.model_dump(mode="json") for entry in LOGS[-30:]],
@@ -198,6 +272,17 @@ def validate_upload(filename: str, size: int):
     return suffix
 
 
+def find_upload_record(filename: str | None = None) -> dict:
+    if not UPLOADED_VIDEOS:
+        raise HTTPException(status_code=400, detail="no_uploaded_videos")
+    if not filename:
+        return UPLOADED_VIDEOS[-1]
+    for item in reversed(UPLOADED_VIDEOS):
+        if item["filename"] == filename or item["stored_as"] == filename:
+            return item
+    raise HTTPException(status_code=404, detail="video_not_found")
+
+
 async def store_upload(file: UploadFile, camera_id: str) -> dict:
     content = await file.read()
     suffix = validate_upload(file.filename or "upload.bin", len(content))
@@ -207,20 +292,44 @@ async def store_upload(file: UploadFile, camera_id: str) -> dict:
 
     STATE["stream_active"] = True
     STATE["current_file"] = file.filename or safe_name
+    STATE["current_file_path"] = str(target)
+    STATE["current_stored_as"] = safe_name
     STATE["camera_id"] = camera_id
     STATE["bind_count"] += 1
 
-    append_log("INFO", f"Upload successfully: {STATE['current_file']} ({round(len(content) / 1024 / 1024, 2)}MB)")
-    append_log("INFO", f"API Binding {camera_id} matched metadata")
-    append_log("INFO", "Stream running. Analytics thread started.")
-
-    return {
-        "ok": True,
+    record = {
         "filename": file.filename or safe_name,
         "stored_as": safe_name,
+        "path": str(target),
         "size": len(content),
         "camera_id": camera_id,
+        "created_at": now_iso(),
     }
+    UPLOADED_VIDEOS.append(record)
+
+    append_log("INFO", f"Upload successfully: {STATE['current_file']} ({round(len(content) / 1024 / 1024, 2)}MB)")
+    append_log("INFO", f"API Binding {camera_id} matched metadata")
+    append_log("INFO", "Stream running. Analysis queue prepared.")
+
+    return {"ok": True, **record}
+
+
+def apply_analysis_result(result: dict, source_record: dict):
+    TRACKS.clear()
+    for item in result["tracks"]:
+        TRACKS.append(TrackFrame(**item))
+    STATE["analysis_active"] = True
+    STATE["analysis_model"] = result["mode"]
+    STATE["tracked_targets"] = result["tracked_targets"]
+    STATE["frames_processed"] = result["frames_processed"]
+    STATE["avg_confidence"] = float(result["avg_confidence"])
+    STATE["last_analysis_file"] = source_record["filename"]
+    STATE["current_file"] = source_record["filename"]
+    STATE["current_file_path"] = source_record["path"]
+    STATE["current_stored_as"] = source_record["stored_as"]
+    STATE["camera_id"] = source_record["camera_id"]
+    STATE["stream_active"] = True
+    STATE["alert_count"] = max(2, min(9, result["tracked_targets"] + (1 if result["mode"] == "simulation" else 0)))
 
 
 ensure_seed_user()
@@ -331,6 +440,10 @@ def health(authorization: str | None = Header(default=None)):
         "stream_active": STATE["stream_active"],
         "camera_id": STATE["camera_id"],
         "current_file": STATE["current_file"],
+        "current_video_url": current_video_url(STATE["current_stored_as"]),
+        "analysis_model": STATE["analysis_model"],
+        "tracked_targets": STATE["tracked_targets"],
+        "analysis_active": STATE["analysis_active"],
         "user": public_user(user),
     }
 
@@ -366,6 +479,33 @@ def logs(level: str | None = None, authorization: str | None = Header(default=No
 def tracks(authorization: str | None = Header(default=None)):
     require_auth(authorization)
     return [entry.model_dump() for entry in TRACKS]
+
+
+@app.post("/api/analysis/run")
+def run_analysis(payload: AnalysisPayload, authorization: str | None = Header(default=None)):
+    user = require_auth(authorization)
+    record = find_upload_record(payload.filename)
+    append_log("INFO", f"Tracking analysis requested by {user['email']} for {record['filename']}")
+    try:
+        result = analyze_video_tracks(record["path"])
+    except Exception as exc:
+        append_log("WARN", f"YOLO inference failed for {record['filename']}: {exc}")
+        raise HTTPException(status_code=500, detail=f"yolo_unavailable:{exc}") from None
+    apply_analysis_result(result, record)
+    append_log("INFO", f"Tracking analysis completed: {record['filename']} | model={result['mode']} | targets={result['tracked_targets']}")
+    return {
+        "ok": True,
+        "message": "人物追踪分析已完成，轨迹已同步到画布。",
+        "mode": result["mode"],
+        "tracked_targets": result["tracked_targets"],
+        "frames_processed": result["frames_processed"],
+        "avg_confidence": result["avg_confidence"],
+        "file": record["filename"],
+        "video_url": current_video_url(record["stored_as"]),
+        "camera_id": record["camera_id"],
+        "tracks": result["tracks"],
+        "detections": result.get("detections", []),
+    }
 
 
 @app.get("/api/report")
@@ -417,6 +557,9 @@ async def tracks_ws(websocket: WebSocket):
         while True:
             payload = []
             for track in TRACKS:
+                if STATE["analysis_active"]:
+                    payload.append(track.model_dump())
+                    continue
                 shifted = []
                 for idx, point in enumerate(track.points):
                     dx = (step % 12) * 1.4
@@ -430,3 +573,16 @@ async def tracks_ws(websocket: WebSocket):
         return
     except Exception:
         await websocket.close()
+
+app.mount('/uploads', StaticFiles(directory=str(UPLOAD_DIR)), name='uploads')
+
+
+
+
+
+
+
+
+
+
+
