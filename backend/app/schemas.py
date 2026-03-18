@@ -34,3 +34,32 @@ class TrackFrame(BaseModel):
     color: str
     label: str
     points: List[List[float]]
+
+
+class UserProfile(BaseModel):
+    id: str
+    name: str
+    email: str
+    role: Literal["admin", "viewer"]
+    created_at: str
+
+
+class LoginPayload(BaseModel):
+    email: str
+    password: str
+
+
+class RegisterPayload(BaseModel):
+    name: str
+    email: str
+    password: str
+
+
+class ForgotPasswordPayload(BaseModel):
+    email: str
+
+
+class ResetPasswordPayload(BaseModel):
+    email: str
+    token: str
+    password: str

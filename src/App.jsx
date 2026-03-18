@@ -12,56 +12,90 @@ import {
   trendValues as fallbackTrendValues,
   zoneDurations as fallbackZoneDurations,
 } from "./data";
-import { downloadReport, fetchHealth, fetchLogs, fetchOverview, uploadVideo } from "./hooks/api";
+import {
+  downloadReport,
+  fetchCameras,
+  fetchHealth,
+  fetchLogs,
+  fetchMe,
+  fetchOverview,
+  forgotPassword,
+  login,
+  logout,
+  register,
+  resetPassword,
+  uploadBatch,
+} from "./hooks/api";
 import { connectTrackStream } from "./hooks/realtime";
 
 const UI = {
-  brandMonitor: "XX\u6821\u56ed\u667a\u80fd\u76d1\u63a7\u7cfb\u7edf",
-  brandConsole: "\u8f68\u8ff9\u5206\u6790\u63a7\u5236\u53f0",
-  navMonitor: "\u5b9e\u65f6\u76d1\u63a7",
-  navOverview: "\u7edf\u8ba1\u6982\u89c8",
-  navLogs: "\u4e8b\u4ef6\u65e5\u5fd7",
-  subUpload: "\u89c6\u9891\u7ed1\u5b9a",
-  subTrack: "\u8f68\u8ff9\u753b\u5e03",
-  logout: "\u9000\u51fa\u767b\u5f55",
-  monitorTitle: "\u5b9e\u65f6\u76d1\u63a7",
-  monitorSubtitle: "2026\u5e7403\u670817\u65e5 - \u5b9e\u65f6\u89c6\u9891\u8f68\u8ff9\u5206\u6790",
-  apiOnline: "API \u5728\u7ebf",
-  apiFallback: "API \u79bb\u7ebf",
+  brandMonitor: "XX校园智能监控系统",
+  brandConsole: "轨迹分析控制台",
+  navMonitor: "实时监控",
+  navOverview: "统计概览",
+  navLogs: "事件日志",
+  subUpload: "视频绑定",
+  subTrack: "轨迹画布",
+  logout: "退出登录",
+  monitorTitle: "实时监控",
+  monitorSubtitle: "2026年03月18日 - 实时视频轨迹分析",
+  apiOnline: "API 在线",
+  apiFallback: "API 离线",
   redisOnline: "Redis",
-  redisOffline: "Redis \u79bb\u7ebf",
-  wsConnected: "WS \u5df2\u8fde\u63a5",
-  wsFallback: "WS \u6a21\u62df\u6a21\u5f0f",
-  streamRunning: "\u6570\u636e\u6d41\uff1a\u8fd0\u884c\u4e2d",
-  streamIdle: "\u6570\u636e\u6d41\uff1a\u5f85\u547d",
-  uploadWaiting: "\u5f85\u5bfc\u5165\u89c6\u9891\u6e90",
-  uploadHint:
-    "\u8bf7\u5c06\u56ed\u5185\u76d1\u63a7\u89c6\u9891\u62d6\u52a8\u81f3\u6b64\u5904\uff0c\u6216\u901a\u8fc7\u5de6\u4fa7\u9762\u677f\u4e0a\u4f20\u3002\u7cfb\u7edf\u5c06\u81ea\u52a8\u89e3\u6790\u89c6\u9891\u5e27\u5e76\u8fdb\u884c\u8f68\u8ff9\u70b9\u62bd\u6837\u4e0e ID \u5206\u914d\u3002",
-  chooseFile: "\u70b9\u51fb\u6b64\u5904\u9009\u62e9\u89c6\u9891\u6587\u4ef6",
-  dragFile: "\u6216\u5c06\u6587\u4ef6\u62d6\u62fd\u5230\u8fd9\u91cc",
-  fileTypes: "\u652f\u6301 MP4, AVI, MOV (\u63a8\u8350 1080P/25FPS, \u5355\u6587\u4ef6 <= 300MB)",
-  uploadBind: "\u4e0a\u4f20\u5e76\u7ed1\u5b9a",
-  uploading: "\u4e0a\u4f20\u4e2d...",
-  uploadDone: "\u4e0a\u4f20\u6210\u529f\uff0c\u5df2\u5207\u5165\u8f68\u8ff9\u76d1\u63a7\u3002",
-  selectedSuffix: " \u5df2\u9009\u62e9\uff0c\u7b49\u5f85\u7ed1\u5b9a\u5206\u6790\u6d41\u3002",
-  uploadFailed: "\u4e0a\u4f20\u5931\u8d25\uff0c\u8bf7\u5148\u542f\u52a8 FastAPI \u670d\u52a1\u3002",
-  pickFileFirst: "\u8bf7\u5148\u9009\u62e9\u8981\u4e0a\u4f20\u7684\u89c6\u9891\u6587\u4ef6\u3002",
-  badType: "\u4ec5\u652f\u6301 MP4 / AVI / MOV \u683c\u5f0f\u6587\u4ef6\u3002",
-  tooLarge: "\u6587\u4ef6\u4f53\u79ef\u8d85\u8fc7 300MB\uff0c\u8bf7\u66f4\u6362\u89c6\u9891\u3002",
-  noData: "\u6570\u636e\u6d41\uff1a\u65e0\u6570\u636e",
-  trackHint: "camera_id:1 / buffer: ok / mode: realtime",
-  overviewTitle: "\u7edf\u8ba1\u6982\u89c8",
-  exportReport: "\u5bfc\u51fa\u62a5\u544a",
-  exporting: "\u5bfc\u51fa\u4e2d...",
-  exportDone: "\u62a5\u544a\u5df2\u5f00\u59cb\u4e0b\u8f7d\u3002",
-  exportFail: "\u62a5\u544a\u5bfc\u51fa\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u540e\u7aef\u670d\u52a1\u3002",
-  trendTitle: "\u89e3\u6790\u70b9\u6570\u8d8b\u52bf (24h)",
-  zoneTitle: "\u533a\u57df\u505c\u7559\u65f6\u957f TOP",
-  logsTitle: "\u4e8b\u4ef6\u65e5\u5fd7",
-  updatedPrefix: "\u6700\u540e\u66f4\u65b0",
-  justNow: "\u521a\u521a",
-  searchPlaceholder: "\u5173\u952e\u8bcd\u641c\u7d22...",
-  refresh: "\u5237\u65b0",
+  redisOffline: "Redis 离线",
+  wsConnected: "WS 已连接",
+  wsFallback: "WS 模拟模式",
+  streamRunning: "数据流：运行中",
+  streamIdle: "数据流：待命",
+  uploadWaiting: "待导入视频源",
+  uploadHint: "支持一次选择多个视频文件，并分别绑定到不同摄像头。上传完成后系统会自动进入实时轨迹分析。",
+  chooseFile: "点击选择多个视频文件",
+  dragFile: "或将多个文件拖拽到这里",
+  fileTypes: "支持 MP4 / AVI / MOV，单文件 <= 300MB，可批量绑定摄像头",
+  uploadBind: "批量上传并绑定",
+  uploading: "上传中...",
+  uploadDone: "批量上传成功，已切入轨迹监控。",
+  uploadFailed: "批量上传失败，请检查后端服务。",
+  pickFileFirst: "请先选择至少一个视频文件。",
+  badType: "仅支持 MP4 / AVI / MOV 格式文件。",
+  tooLarge: "存在超过 300MB 的文件，请移除后重试。",
+  noData: "数据流：无数据",
+  trackHint: "camera_id: 1 / buffer: ok / mode: realtime",
+  overviewTitle: "统计概览",
+  exportReport: "导出报告",
+  exporting: "导出中...",
+  exportDone: "报告已开始下载。",
+  exportFail: "报告导出失败，请检查后端服务。",
+  trendTitle: "解析点数趋势 (24h)",
+  zoneTitle: "区域停留时长 TOP",
+  logsTitle: "事件日志",
+  updatedPrefix: "最后更新",
+  justNow: "刚刚",
+  searchPlaceholder: "关键词搜索...",
+  refresh: "刷新",
+  authTitle: "轨迹分析控制台",
+  authSubtitle: "校园智能监控与实时轨迹分析中台",
+  login: "登录",
+  register: "注册",
+  forgotPassword: "忘记密码",
+  resetPassword: "重置密码",
+  email: "邮箱",
+  password: "密码",
+  confirmPassword: "确认密码",
+  displayName: "姓名",
+  loginAction: "进入系统",
+  registerAction: "创建账号",
+  forgotAction: "发送重置令牌",
+  resetAction: "更新密码",
+  switchToReset: "已有令牌，直接重置密码",
+  backToLogin: "返回登录",
+  authHint: "演示默认管理员：admin@school.local / Admin12345",
+  tokenLabel: "重置令牌",
+  batchTitle: "批量视频队列",
+  batchEmpty: "当前未选择文件，请先拖入或点击选择视频文件。",
+  bindingHeader: "绑定摄像头",
+  batchCount: "批量数量",
+  defaultCamera: "选择摄像头",
 };
 
 const navItems = [
@@ -72,6 +106,7 @@ const navItems = [
 
 const ALLOWED_SUFFIXES = [".mp4", ".avi", ".mov"];
 const MAX_UPLOAD_SIZE = 300 * 1024 * 1024;
+const TOKEN_KEY = "school-insight-token";
 
 function formatLogTime(value) {
   const ts = new Date(value);
@@ -80,19 +115,62 @@ function formatLogTime(value) {
   return `${ts.getFullYear()}-${pad(ts.getMonth() + 1)}-${pad(ts.getDate())} ${pad(ts.getHours())}:${pad(ts.getMinutes())}:${pad(ts.getSeconds())}`;
 }
 
-function validateFile(file) {
-  if (!file) return { ok: false, message: UI.pickFileFirst };
-  const lower = file.name.toLowerCase();
-  const matched = ALLOWED_SUFFIXES.some((suffix) => lower.endsWith(suffix));
-  if (!matched) return { ok: false, message: UI.badType };
-  if (file.size > MAX_UPLOAD_SIZE) return { ok: false, message: UI.tooLarge };
-  return { ok: true, message: file.name + UI.selectedSuffix };
+function makeQueueItem(file, cameraId, index) {
+  return {
+    id: `${file.name}-${file.size}-${file.lastModified}-${index}`,
+    file,
+    cameraId,
+    status: "pending",
+    message: "等待上传",
+  };
+}
+
+function validateFiles(files) {
+  if (!files.length) return { ok: false, message: UI.pickFileFirst };
+  for (const file of files) {
+    const lower = file.name.toLowerCase();
+    const matched = ALLOWED_SUFFIXES.some((suffix) => lower.endsWith(suffix));
+    if (!matched) return { ok: false, message: `${file.name}：${UI.badType}` };
+    if (file.size > MAX_UPLOAD_SIZE) return { ok: false, message: `${file.name}：${UI.tooLarge}` };
+  }
+  return { ok: true, message: `已载入 ${files.length} 个文件，等待批量绑定。` };
+}
+
+function parseApiError(error) {
+  const text = String(error?.message || "");
+  if (text.includes("invalid_credentials")) return "邮箱或密码错误。";
+  if (text.includes("email_exists")) return "该邮箱已注册。";
+  if (text.includes("missing_name")) return "请输入姓名。";
+  if (text.includes("invalid_email")) return "请输入正确的邮箱地址。";
+  if (text.includes("password_too_short")) return "密码至少 8 位。";
+  if (text.includes("missing_token") || text.includes("invalid_token")) return "登录状态已失效，请重新登录。";
+  if (text.includes("invalid_reset_token")) return "重置令牌不正确。";
+  if (text.includes("reset_token_expired")) return "重置令牌已过期。";
+  if (text.includes("invalid_reset_request")) return "重置请求无效，请重新获取令牌。";
+  if (text.includes("unsupported_file_type")) return UI.badType;
+  if (text.includes("file_too_large")) return UI.tooLarge;
+  if (text.includes("camera_ids_length_mismatch")) return "批量绑定数据不完整，请重新选择文件。";
+  return "请求失败，请稍后重试。";
 }
 
 function App() {
+  const [token, setToken] = useState(() => window.localStorage.getItem(TOKEN_KEY) || "");
+  const [booting, setBooting] = useState(true);
+  const [authMode, setAuthMode] = useState("login");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authMessage, setAuthMessage] = useState(UI.authHint);
+  const [authError, setAuthError] = useState(false);
+  const [authForm, setAuthForm] = useState({
+    name: "",
+    email: "admin@school.local",
+    password: "Admin12345",
+    confirmPassword: "",
+    resetToken: "",
+  });
+  const [user, setUser] = useState(null);
   const [activePage, setActivePage] = useState("monitor");
   const [monitorMode, setMonitorMode] = useState("upload");
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [queue, setQueue] = useState([]);
   const [uploadState, setUploadState] = useState("idle");
   const [uploadMessage, setUploadMessage] = useState(UI.noData);
   const [dragActive, setDragActive] = useState(false);
@@ -107,13 +185,34 @@ function App() {
     zoneDurations: fallbackZoneDurations,
   });
   const [logs, setLogs] = useState(initialLogs);
+  const [cameras, setCameras] = useState([{ id: "camera_id: 1", name: "默认摄像头" }]);
   const [lastUpdated, setLastUpdated] = useState(UI.justNow);
   const [search, setSearch] = useState("");
-  const [levelFilter, setLevelFilter] = useState("\u5168\u90e8\u7ea7\u522b");
-  const [windowFilter] = useState("\u6700\u8fd11\u5c0f\u65f6");
+  const [levelFilter, setLevelFilter] = useState("全部级别");
+  const [windowFilter] = useState("最近1小时");
+
+  const authView = {
+    login: { title: UI.login, action: UI.loginAction },
+    register: { title: UI.register, action: UI.registerAction },
+    forgot: { title: UI.forgotPassword, action: UI.forgotAction },
+    reset: { title: UI.resetPassword, action: UI.resetAction },
+  };
+
+  const setSession = (nextToken, nextUser) => {
+    setToken(nextToken);
+    setUser(nextUser);
+    window.localStorage.setItem(TOKEN_KEY, nextToken);
+  };
+
+  const clearSession = () => {
+    setToken("");
+    setUser(null);
+    setWsLive(false);
+    window.localStorage.removeItem(TOKEN_KEY);
+  };
 
   const loadHealth = () => {
-    return fetchHealth()
+    return fetchHealth(token)
       .then((data) => {
         setHealth({
           api: !!data.api,
@@ -123,14 +222,20 @@ function App() {
           camera_id: data.camera_id || "camera_id: 1",
           current_file: data.current_file || null,
         });
+        if (data.user) {
+          setUser(data.user);
+        }
       })
-      .catch(() => {
+      .catch((error) => {
+        if (String(error?.message || "").includes("invalid_token")) {
+          clearSession();
+        }
         setHealth({ api: false, redis: false, ws: false, stream_active: false, camera_id: "camera_id: 1", current_file: null });
       });
   };
 
   const loadOverview = () => {
-    return fetchOverview()
+    return fetchOverview(token)
       .then((data) => {
         setOverview({
           metricCards: data.metric_cards,
@@ -150,8 +255,8 @@ function App() {
   };
 
   const loadLogs = (nextLevel = levelFilter) => {
-    const backendLevel = nextLevel === "\u5168\u90e8\u7ea7\u522b" ? "ALL" : nextLevel;
-    return fetchLogs(backendLevel)
+    const backendLevel = nextLevel === "全部级别" ? "ALL" : nextLevel;
+    return fetchLogs(token, backendLevel)
       .then((items) => {
         setLogs(items.map((item) => ({ ...item, ts: formatLogTime(item.ts) })));
         setLastUpdated(UI.justNow);
@@ -161,10 +266,41 @@ function App() {
       });
   };
 
+  const loadCameras = () => {
+    return fetchCameras(token)
+      .then((items) => {
+        if (Array.isArray(items) && items.length) {
+          setCameras(items);
+          setQueue((current) => current.map((entry) => ({ ...entry, cameraId: entry.cameraId || items[0].id })));
+        }
+      })
+      .catch(() => {
+        setCameras([{ id: "camera_id: 1", name: "默认摄像头" }]);
+      });
+  };
+
   useEffect(() => {
+    if (!token) {
+      setBooting(false);
+      return;
+    }
+    fetchMe(token)
+      .then((data) => {
+        setUser(data.user);
+      })
+      .catch(() => {
+        clearSession();
+      })
+      .finally(() => setBooting(false));
+  }, []);
+
+  useEffect(() => {
+    if (!token || !user) return undefined;
+
     loadHealth();
     loadOverview();
     loadLogs();
+    loadCameras();
 
     const healthTimer = window.setInterval(() => {
       loadHealth();
@@ -181,19 +317,21 @@ function App() {
       window.clearInterval(overviewTimer);
       window.clearInterval(logsTimer);
     };
-  }, []);
+  }, [token, user]);
 
   useEffect(() => {
+    if (!token || !user) return;
     loadLogs(levelFilter);
-  }, [levelFilter]);
+  }, [levelFilter, token, user]);
 
   useEffect(() => {
-    if (activePage !== "monitor" || monitorMode !== "track") {
+    if (!token || activePage !== "monitor" || monitorMode !== "track") {
       return undefined;
     }
 
     let closed = false;
     const socket = connectTrackStream({
+      token,
       onMessage: (nextTracks) => {
         if (closed) return;
         setTracks(nextTracks);
@@ -216,7 +354,7 @@ function App() {
       closed = true;
       socket.close();
     };
-  }, [activePage, monitorMode]);
+  }, [token, activePage, monitorMode]);
 
   const visibleLogs = useMemo(() => {
     return logs.filter((item) => {
@@ -229,21 +367,31 @@ function App() {
     loadLogs(levelFilter);
   };
 
-  const applyFile = (file) => {
-    const result = validateFile(file);
+  const applyFiles = (files) => {
+    const fileList = Array.from(files || []);
+    const result = validateFiles(fileList);
     if (!result.ok) {
-      setSelectedFile(null);
+      setQueue([]);
       setUploadState("error");
       setUploadMessage(result.message);
       return;
     }
-    setSelectedFile(file);
+    const defaultCamera = cameras[0]?.id || "camera_id: 1";
+    setQueue(fileList.map((file, index) => makeQueueItem(file, defaultCamera, index)));
     setUploadState("idle");
     setUploadMessage(result.message);
   };
 
-  const handleUpload = async () => {
-    const result = validateFile(selectedFile);
+  const updateQueueCamera = (id, cameraId) => {
+    setQueue((current) => current.map((entry) => (entry.id === id ? { ...entry, cameraId } : entry)));
+  };
+
+  const removeQueueItem = (id) => {
+    setQueue((current) => current.filter((entry) => entry.id !== id));
+  };
+
+  const handleBatchUpload = async () => {
+    const result = validateFiles(queue.map((entry) => entry.file));
     if (!result.ok) {
       setUploadState("error");
       setUploadMessage(result.message);
@@ -253,28 +401,31 @@ function App() {
     try {
       setUploadState("uploading");
       setUploadMessage(UI.uploading);
-      await uploadVideo(selectedFile);
+      setQueue((current) => current.map((entry) => ({ ...entry, status: "uploading", message: "上传中" })));
+      const data = await uploadBatch(queue, token);
+      const statusMap = new Map(data.items.map((item) => [item.filename, item]));
+      setQueue((current) =>
+        current.map((entry) => {
+          const matched = statusMap.get(entry.file.name);
+          if (!matched) return { ...entry, status: "done", message: "已上传" };
+          return { ...entry, status: "done", message: `${matched.camera_id} / 已绑定` };
+        }),
+      );
       setUploadState("success");
-      setUploadMessage(UI.uploadDone);
+      setUploadMessage(`${UI.uploadDone} 共 ${data.count} 个文件。`);
       await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter)]);
       setMonitorMode("track");
     } catch (error) {
-      const text = String(error?.message || "");
-      if (text.includes("unsupported_file_type")) {
-        setUploadMessage(UI.badType);
-      } else if (text.includes("file_too_large")) {
-        setUploadMessage(UI.tooLarge);
-      } else {
-        setUploadMessage(UI.uploadFailed);
-      }
       setUploadState("error");
+      setUploadMessage(parseApiError(error) || UI.uploadFailed);
+      setQueue((current) => current.map((entry) => ({ ...entry, status: "error", message: "上传失败" })));
     }
   };
 
   const handleExport = async () => {
     try {
       setExporting(true);
-      await downloadReport();
+      await downloadReport(token);
       setLastUpdated(UI.exportDone);
     } catch {
       setLastUpdated(UI.exportFail);
@@ -283,7 +434,140 @@ function App() {
     }
   };
 
-  const uploadTipClass = uploadState === "success" ? "success" : uploadState === "error" ? "error" : selectedFile ? "success" : "error";
+  const handleAuthSubmit = async (event) => {
+    event.preventDefault();
+    setAuthBusy(true);
+    setAuthError(false);
+
+    try {
+      if (authMode === "login") {
+        const data = await login({ email: authForm.email, password: authForm.password });
+        setSession(data.token, data.user);
+        setAuthMessage("登录成功。正在进入控制台。");
+      } else if (authMode === "register") {
+        if (authForm.password !== authForm.confirmPassword) {
+          throw new Error("confirm_mismatch");
+        }
+        const data = await register({ name: authForm.name, email: authForm.email, password: authForm.password });
+        setSession(data.token, data.user);
+        setAuthMessage("注册成功，已自动登录。");
+      } else if (authMode === "forgot") {
+        const data = await forgotPassword({ email: authForm.email });
+        setAuthForm((current) => ({ ...current, resetToken: data.reset_token || current.resetToken }));
+        setAuthMessage(data.reset_token ? `重置令牌：${data.reset_token}，15 分钟内有效。` : "如果账号存在，重置令牌已生成。" );
+        setAuthMode("reset");
+      } else {
+        if (authForm.password !== authForm.confirmPassword) {
+          throw new Error("confirm_mismatch");
+        }
+        const data = await resetPassword({ email: authForm.email, token: authForm.resetToken, password: authForm.password });
+        setAuthMessage(data.message);
+        setAuthMode("login");
+      }
+    } catch (error) {
+      const text = String(error?.message || "");
+      setAuthError(true);
+      setAuthMessage(text.includes("confirm_mismatch") ? "两次输入的密码不一致。" : parseApiError(error));
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout(token);
+    } catch {
+      // ignore logout errors during local cleanup
+    }
+    clearSession();
+    setAuthMode("login");
+    setAuthMessage(UI.authHint);
+  };
+
+  const uploadTipClass = uploadState === "success" ? "success" : uploadState === "error" ? "error" : queue.length ? "success" : "error";
+
+  if (booting) {
+    return <div className="auth-shell"><div className="auth-card compact"><h1>正在校验会话...</h1></div></div>;
+  }
+
+  if (!token || !user) {
+    return (
+      <div className="auth-shell">
+        <div className="auth-card">
+          <div className="auth-brand">
+            <div className="brand-mark">SI</div>
+            <div>
+              <h1>{UI.authTitle}</h1>
+              <p>{UI.authSubtitle}</p>
+            </div>
+          </div>
+
+          <div className="auth-tabs">
+            {["login", "register", "forgot", "reset"].map((key) => (
+              <button
+                key={key}
+                className={`auth-tab ${authMode === key ? "active" : ""}`}
+                onClick={() => {
+                  setAuthMode(key);
+                  setAuthError(false);
+                  setAuthMessage(key === "login" ? UI.authHint : "请填写表单后继续。");
+                }}
+                type="button"
+              >
+                {authView[key].title}
+              </button>
+            ))}
+          </div>
+
+          <form className="auth-form" onSubmit={handleAuthSubmit}>
+            {authMode === "register" && (
+              <label>
+                <span>{UI.displayName}</span>
+                <input value={authForm.name} onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))} />
+              </label>
+            )}
+
+            <label>
+              <span>{UI.email}</span>
+              <input type="email" value={authForm.email} onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))} />
+            </label>
+
+            {authMode === "reset" && (
+              <label>
+                <span>{UI.tokenLabel}</span>
+                <input value={authForm.resetToken} onChange={(event) => setAuthForm((current) => ({ ...current, resetToken: event.target.value }))} />
+              </label>
+            )}
+
+            {authMode !== "forgot" && (
+              <label>
+                <span>{UI.password}</span>
+                <input type="password" value={authForm.password} onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))} />
+              </label>
+            )}
+
+            {(authMode === "register" || authMode === "reset") && (
+              <label>
+                <span>{UI.confirmPassword}</span>
+                <input type="password" value={authForm.confirmPassword} onChange={(event) => setAuthForm((current) => ({ ...current, confirmPassword: event.target.value }))} />
+              </label>
+            )}
+
+            <button className="primary-button auth-submit" disabled={authBusy} type="submit">
+              {authBusy ? "处理中..." : authView[authMode].action}
+            </button>
+          </form>
+
+          <div className={`auth-message ${authError ? "error" : "success"}`}>{authMessage}</div>
+
+          <div className="auth-links">
+            <button type="button" onClick={() => setAuthMode("reset")}>{UI.switchToReset}</button>
+            <button type="button" onClick={() => setAuthMode("login")}>{UI.backToLogin}</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -308,16 +592,16 @@ function App() {
 
         <div className="sidebar-footer">
           <div className="user-card">
-            <div className="avatar">{activePage === "monitor" ? "AS" : "AD"}</div>
+            <div className="avatar">{(user.name || "U").slice(0, 2).toUpperCase()}</div>
             <div>
-              <div className="user-name">admin</div>
+              <div className="user-name">{user.name}</div>
               <div className="user-tags">
-                <span>admin</span>
-                {activePage === "monitor" ? null : <span>viewer</span>}
+                <span>{user.role}</span>
+                <span>{user.email}</span>
               </div>
             </div>
           </div>
-          <button className="ghost-button">{UI.logout}</button>
+          <button className="ghost-button" onClick={handleLogout}>{UI.logout}</button>
         </div>
       </aside>
 
@@ -341,18 +625,8 @@ function App() {
 
             <section className="monitor-grid">
               <div className="subnav-row">
-                <button
-                  className={`subnav-button ${monitorMode === "upload" ? "active" : ""}`}
-                  onClick={() => setMonitorMode("upload")}
-                >
-                  {UI.subUpload}
-                </button>
-                <button
-                  className={`subnav-button ${monitorMode === "track" ? "active" : ""}`}
-                  onClick={() => setMonitorMode("track")}
-                >
-                  {UI.subTrack}
-                </button>
+                <button className={`subnav-button ${monitorMode === "upload" ? "active" : ""}`} onClick={() => setMonitorMode("upload")}>{UI.subUpload}</button>
+                <button className={`subnav-button ${monitorMode === "track" ? "active" : ""}`} onClick={() => setMonitorMode("track")}>{UI.subTrack}</button>
               </div>
 
               {monitorMode === "upload" ? (
@@ -372,24 +646,50 @@ function App() {
                     onDrop={(event) => {
                       event.preventDefault();
                       setDragActive(false);
-                      const file = event.dataTransfer.files?.[0] ?? null;
-                      applyFile(file);
+                      applyFiles(event.dataTransfer.files);
                     }}
                   >
                     <input
                       type="file"
+                      multiple
                       accept=".mp4,.avi,.mov"
-                      onChange={(event) => {
-                        const file = event.target.files?.[0] ?? null;
-                        applyFile(file);
-                      }}
+                      onChange={(event) => applyFiles(event.target.files)}
                     />
                     <div className="dropzone-plus">+</div>
                     <strong>{UI.chooseFile}</strong>
                     <em>{UI.dragFile}</em>
                     <span>{UI.fileTypes}</span>
                   </label>
-                  <button className="primary-button" onClick={handleUpload} disabled={uploadState === "uploading"}>
+
+                  <div className="batch-board">
+                    <div className="batch-board-head">
+                      <h3>{UI.batchTitle}</h3>
+                      <span>{UI.batchCount}：{queue.length}</span>
+                    </div>
+                    {queue.length ? (
+                      <div className="batch-list">
+                        {queue.map((entry, index) => (
+                          <div className="batch-row" key={entry.id}>
+                            <div className="batch-file">
+                              <strong>{index + 1}. {entry.file.name}</strong>
+                              <span>{(entry.file.size / 1024 / 1024).toFixed(2)} MB</span>
+                            </div>
+                            <select value={entry.cameraId} onChange={(event) => updateQueueCamera(entry.id, event.target.value)}>
+                              {cameras.map((camera) => (
+                                <option key={camera.id} value={camera.id}>{camera.id} / {camera.name}</option>
+                              ))}
+                            </select>
+                            <span className={`queue-badge ${entry.status}`}>{entry.message}</span>
+                            <button className="queue-remove" type="button" onClick={() => removeQueueItem(entry.id)}>移除</button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="batch-empty">{UI.batchEmpty}</div>
+                    )}
+                  </div>
+
+                  <button className="primary-button" onClick={handleBatchUpload} disabled={uploadState === "uploading"}>
                     {uploadState === "uploading" ? UI.uploading : UI.uploadBind}
                   </button>
                   <div className={`upload-tip ${uploadTipClass}`}>{uploadMessage}</div>
@@ -411,9 +711,7 @@ function App() {
           <>
             <header className="topbar topbar-plain">
               <h1>{UI.overviewTitle}</h1>
-              <button className="outline-blue" onClick={handleExport} disabled={exporting}>
-                {exporting ? UI.exporting : UI.exportReport}
-              </button>
+              <button className="outline-blue" onClick={handleExport} disabled={exporting}>{exporting ? UI.exporting : UI.exportReport}</button>
             </header>
 
             <section className="overview-grid">
@@ -456,24 +754,16 @@ function App() {
               <div className="log-toolbar">
                 <label className="search-box">
                   <span>S</span>
-                  <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder={UI.searchPlaceholder}
-                  />
+                  <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={UI.searchPlaceholder} />
                 </label>
                 <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value)}>
                   {logLevels.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
+                    <option key={item} value={item}>{item}</option>
                   ))}
                 </select>
                 <select value={windowFilter} onChange={() => {}}>
                   {logWindows.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
+                    <option key={item} value={item}>{item}</option>
                   ))}
                 </select>
                 <button className="refresh-button" onClick={refreshLogs}>{UI.refresh}</button>

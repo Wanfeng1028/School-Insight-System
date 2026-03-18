@@ -7,8 +7,9 @@
   }));
 }
 
-export function connectTrackStream({ onMessage, onError }) {
-  const socket = new WebSocket("ws://127.0.0.1:8000/ws/tracks");
+export function connectTrackStream({ token, onMessage, onError }) {
+  const query = token ? `?token=${encodeURIComponent(token)}` : "";
+  const socket = new WebSocket(`ws://127.0.0.1:8000/ws/tracks${query}`);
 
   socket.onmessage = (event) => {
     try {
