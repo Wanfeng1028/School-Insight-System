@@ -12,7 +12,10 @@
     "automation:auth:debug": "playwright test automation/auth --debug",
     "automation:logs": "playwright test automation/logs",
     "automation:logs:headed": "playwright test automation/logs --headed",
-    "automation:logs:debug": "playwright test automation/logs --debug"
+    "automation:logs:debug": "playwright test automation/logs --debug",
+    "automation:monitor": "playwright test automation/monitor",
+    "automation:monitor:headed": "playwright test automation/monitor --headed",
+    "automation:monitor:debug": "playwright test automation/monitor --debug"
   },
   "dependencies": {
     "echarts": "^5.6.0",
