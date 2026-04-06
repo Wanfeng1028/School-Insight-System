@@ -1,4 +1,4 @@
-﻿const DEFAULT_API_BASE = `${window.location.protocol === "https:" ? "https:" : "http:"}//${window.location.hostname || "127.0.0.1"}:8000`;
+const DEFAULT_API_BASE = `${window.location.protocol === "https:" ? "https:" : "http:"}//${window.location.hostname || "127.0.0.1"}:8000`;
 const API_BASE = import.meta.env.VITE_API_BASE || DEFAULT_API_BASE;
 
 function getHeaders(token, extra = {}) {
@@ -80,9 +80,28 @@ export function fetchOverview(token) {
   });
 }
 
-export function fetchLogs(token, level = "ALL") {
-  const query = level && level !== "ALL" ? `?level=${encodeURIComponent(level)}` : "";
-  return requestJson(`/api/logs${query}`, {
+export function fetchLogs(token, options = {}) {
+  const params = new URLSearchParams();
+  if (options.level && options.level !== "ALL") {
+    params.set("level", options.level);
+  }
+  if (options.search) {
+    params.set("search", options.search);
+  }
+  if (options.source && options.source !== "ALL") {
+    params.set("source", options.source);
+  }
+  if (options.sinceHours) {
+    params.set("since_hours", String(options.sinceHours));
+  }
+  if (options.limit) {
+    params.set("limit", String(options.limit));
+  }
+  if (options.offset) {
+    params.set("offset", String(options.offset));
+  }
+  const query = params.toString();
+  return requestJson(`/api/logs${query ? `?${query}` : ""}`, {
     headers: getHeaders(token),
   });
 }
@@ -146,5 +165,3 @@ export function uploadBatch(entries, token) {
 }
 
 export { API_BASE };
-
-

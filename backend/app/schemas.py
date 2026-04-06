@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 from typing import List, Literal
 
 from pydantic import BaseModel
@@ -25,7 +25,7 @@ class OverviewPayload(BaseModel):
 
 class LogEntry(BaseModel):
     ts: datetime
-    level: Literal["INFO", "DEBUG", "WARN"]
+    level: Literal["INFO", "DEBUG", "WARN", "ERROR"]
     text: str
 
 

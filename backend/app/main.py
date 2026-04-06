@@ -2,18 +2,21 @@ import asyncio
 import hashlib
 import json
 import math
+import re
 import secrets
+from collections import deque
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from time import perf_counter
 from uuid import uuid4
 
-from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
 from .analytics import analyze_video_tracks
-from .mock_data import LOGS, OVERVIEW_DATA, TRACKS
+from .mock_data import OVERVIEW_DATA, TRACKS
 from .schemas import AnalysisPayload, ForgotPasswordPayload, LoginPayload, RegisterPayload, ResetPasswordPayload, TrackFrame
 
 app = FastAPI(title="School Insight System API", version="0.3.0")
@@ -21,14 +24,20 @@ ROOT = Path(__file__).resolve().parents[1]
 UPLOAD_DIR = ROOT / "uploads"
 DATA_DIR = ROOT / "data"
 USERS_FILE = DATA_DIR / "users.json"
+LOG_FILE = DATA_DIR / "events.jsonl"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_SUFFIXES = {".mp4", ".avi", ".mov"}
 MAX_UPLOAD_SIZE = 300 * 1024 * 1024
 RESET_TOKEN_MINUTES = 15
+SESSION_EXPIRE_HOURS = 24
+MAX_LOG_ENTRIES = 1000
+EMAIL_PATTERN = re.compile(r"\b([A-Za-z0-9._%+-])([A-Za-z0-9._%+-]*)(@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b")
+EXCLUDED_REQUEST_LOG_PATHS = {"/api/logs"}
 SESSION_TOKENS: dict[str, dict] = {}
 RESET_TOKENS: dict[str, dict] = {}
 UPLOADED_VIDEOS: list[dict] = []
+LOGS: deque[dict] = deque(maxlen=MAX_LOG_ENTRIES)
 CAMERAS = [
     {"id": "camera_id: 1", "name": "北门通道"},
     {"id": "camera_id: 2", "name": "操场跑道"},
@@ -48,7 +57,7 @@ app.add_middleware(
         "http://localhost:4173",
         "http://127.0.0.1:4173",
     ],
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|10(?:\.\d{1,3}){3}|172\.(1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2}|192\.168(?:\.\d{1,3}){2})(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -56,7 +65,7 @@ app.add_middleware(
 
 STATE = {
     "api": True,
-    "redis": True,
+    "redis": False,
     "ws": True,
     "stream_active": False,
     "camera_id": "camera_id: 1",
@@ -79,13 +88,151 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def append_log(level: str, text: str):
-    LOGS.append({"ts": now_iso(), "level": level, "text": text})
+def sanitize_log_text(text: str) -> str:
+    return EMAIL_PATTERN.sub(lambda match: f"{match.group(1)}***{match.group(3)}", text)
+
+
+def normalize_log_level(level: str) -> str:
+    value = (level or "INFO").upper()
+    return value if value in {"DEBUG", "INFO", "WARN", "ERROR"} else "INFO"
+
+
+def sanitize_log_value(value):
+    if isinstance(value, str):
+        return sanitize_log_text(value)
+    if isinstance(value, dict):
+        return {str(key): sanitize_log_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [sanitize_log_value(item) for item in value]
+    return value
+
+
+def normalize_log_context(context: dict | None) -> dict:
+    if not context:
+        return {}
+    normalized = {}
+    for key, value in context.items():
+        if value is None:
+            continue
+        normalized[str(key)] = sanitize_log_value(value)
+    return normalized
+
+
+def load_logs_from_disk():
+    if not LOG_FILE.exists():
+        return
+    try:
+        with LOG_FILE.open("r", encoding="utf-8") as handle:
+            for line in deque(handle, maxlen=MAX_LOG_ENTRIES):
+                raw = line.strip()
+                if not raw:
+                    continue
+                try:
+                    item = json.loads(raw)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(item, dict):
+                    continue
+                ts = item.get("ts")
+                level = item.get("level")
+                text = item.get("text")
+                if not isinstance(ts, str) or not isinstance(level, str) or not isinstance(text, str):
+                    continue
+                entry = {
+                    "ts": ts,
+                    "level": normalize_log_level(level),
+                    "text": text,
+                    "source": item.get("source") or "app",
+                    "context": item.get("context") if isinstance(item.get("context"), dict) else {},
+                }
+                LOGS.append(entry)
+    except OSError:
+        return
+
+
+def append_log(level: str, text: str, source: str = "app", context: dict | None = None) -> dict:
+    entry = {
+        "ts": now_iso(),
+        "level": normalize_log_level(level),
+        "text": sanitize_log_text(text),
+        "source": source,
+        "context": normalize_log_context(context),
+    }
+    LOGS.append(entry)
+    try:
+        with LOG_FILE.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+    return entry
+
+
+def parse_entry_time(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def query_logs(
+    level: str | None = None,
+    search: str | None = None,
+    source: str | None = None,
+    since_hours: int | None = None,
+    limit: int = 120,
+) -> list[dict]:
+    entries = list(LOGS)
+    if level and level != "ALL":
+        normalized_level = normalize_log_level(level)
+        entries = [entry for entry in entries if entry["level"] == normalized_level]
+    if source and source != "ALL":
+        target_source = source.strip().lower()
+        entries = [entry for entry in entries if entry.get("source", "").lower() == target_source]
+    if search:
+        keyword = search.strip().lower()
+        if keyword:
+            entries = [
+                entry
+                for entry in entries
+                if keyword in entry["text"].lower()
+                or keyword in json.dumps(entry.get("context", {}), ensure_ascii=False).lower()
+            ]
+    if since_hours:
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=max(1, since_hours))
+        entries = [entry for entry in entries if (parse_entry_time(entry["ts"]) or cutoff) >= cutoff]
+    capped_limit = max(1, min(limit, 500))
+    return entries[-capped_limit:]
+
+
+def paginate_logs(
+    level: str | None = None,
+    search: str | None = None,
+    source: str | None = None,
+    since_hours: int | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> dict:
+    entries = query_logs(level=level, search=search, source=source, since_hours=since_hours, limit=500)
+    total = len(entries)
+    safe_limit = max(1, min(limit, 100))
+    safe_offset = max(0, offset)
+    items = entries[safe_offset:safe_offset + safe_limit]
+    return {
+        "items": items,
+        "total": total,
+        "limit": safe_limit,
+        "offset": safe_offset,
+        "has_more": safe_offset + safe_limit < total,
+    }
 
 def current_video_url(stored_as: str | None) -> str | None:
     if not stored_as:
         return None
-    # Return same-origin relative URL so frontend can resolve with API base.
     return f"/uploads/{stored_as}"
 
 
@@ -145,12 +292,18 @@ def ensure_seed_user():
         }
     )
     save_users(users)
-    append_log("INFO", "Seed admin account created: admin@school.local")
+    append_log("INFO", "Seed admin account created: admin@school.local", source="auth", context={"email": "admin@school.local", "role": "admin"})
 
 
 def create_session(user: dict) -> dict:
     token = secrets.token_urlsafe(32)
-    SESSION_TOKENS[token] = {"user_id": user["id"], "email": user["email"], "created_at": now_iso()}
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=SESSION_EXPIRE_HOURS)
+    SESSION_TOKENS[token] = {
+        "user_id": user["id"],
+        "email": user["email"],
+        "created_at": now_iso(),
+        "expires_at": expires_at.isoformat(),
+    }
     return {"token": token, "user": public_user(user)}
 
 
@@ -169,6 +322,18 @@ def get_current_user(authorization: str | None) -> dict:
     session = SESSION_TOKENS.get(token)
     if not session:
         raise HTTPException(status_code=401, detail="invalid_token")
+
+    # 检查 Session 是否过期
+    expires_at_str = session.get("expires_at")
+    if expires_at_str:
+        try:
+            expires_at = datetime.fromisoformat(expires_at_str)
+            if datetime.now(timezone.utc) > expires_at:
+                SESSION_TOKENS.pop(token, None)
+                raise HTTPException(status_code=401, detail="token_expired")
+        except (ValueError, TypeError):
+            pass  # 如果解析失败，忽略过期检查
+
     user = get_user_by_email(session["email"])
     if not user:
         SESSION_TOKENS.pop(token, None)
@@ -253,7 +418,7 @@ def json_report_bytes() -> bytes:
             "tracked_targets": STATE["tracked_targets"],
         },
         "overview": build_overview_payload(),
-        "recent_logs": [entry if isinstance(entry, dict) else entry.model_dump(mode="json") for entry in LOGS[-30:]],
+        "recent_logs": query_logs(limit=30),
     }
     return json.dumps(report, ensure_ascii=False, indent=2).encode("utf-8")
 
@@ -261,6 +426,12 @@ def json_report_bytes() -> bytes:
 def validate_password(password: str):
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="password_too_short")
+    if not re.search(r"[A-Z]", password):
+        raise HTTPException(status_code=400, detail="password_need_uppercase")
+    if not re.search(r"[a-z]", password):
+        raise HTTPException(status_code=400, detail="password_need_lowercase")
+    if not re.search(r"\d", password):
+        raise HTTPException(status_code=400, detail="password_need_digit")
 
 
 def validate_upload(filename: str, size: int):
@@ -307,9 +478,9 @@ async def store_upload(file: UploadFile, camera_id: str) -> dict:
     }
     UPLOADED_VIDEOS.append(record)
 
-    append_log("INFO", f"Upload successfully: {STATE['current_file']} ({round(len(content) / 1024 / 1024, 2)}MB)")
-    append_log("INFO", f"API Binding {camera_id} matched metadata")
-    append_log("INFO", "Stream running. Analysis queue prepared.")
+    append_log("INFO", f"Upload successfully: {STATE['current_file']} ({round(len(content) / 1024 / 1024, 2)}MB)", source="upload", context={"filename": record["filename"], "camera_id": camera_id, "size_mb": round(len(content) / 1024 / 1024, 2)})
+    append_log("INFO", f"API Binding {camera_id} matched metadata", source="upload", context={"filename": record["filename"], "camera_id": camera_id})
+    append_log("INFO", "Stream running. Analysis queue prepared.", source="upload", context={"filename": record["filename"], "camera_id": camera_id})
 
     return {"ok": True, **record}
 
@@ -332,7 +503,40 @@ def apply_analysis_result(result: dict, source_record: dict):
     STATE["alert_count"] = max(2, min(9, result["tracked_targets"] + (1 if result["mode"] == "simulation" else 0)))
 
 
+load_logs_from_disk()
 ensure_seed_user()
+append_log("INFO", "Application startup complete", source="system")
+
+
+@app.middleware("http")
+async def capture_request_logs(request: Request, call_next):
+    started = perf_counter()
+    request_id = uuid4().hex[:12]
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        elapsed = round((perf_counter() - started) * 1000, 1)
+        append_log(
+            "ERROR",
+            f'{request.method} {request.url.path} -> 500 in {elapsed}ms | {exc.__class__.__name__}: {exc}',
+            source="http",
+            context={"request_id": request_id, "method": request.method, "path": request.url.path, "status_code": 500, "duration_ms": elapsed},
+        )
+        raise
+
+    elapsed = round((perf_counter() - started) * 1000, 1)
+    should_log = request.url.path not in EXCLUDED_REQUEST_LOG_PATHS and (
+        response.status_code >= 400 or request.method in {"POST", "PUT", "PATCH", "DELETE"}
+    )
+    if should_log:
+        level = "ERROR" if response.status_code >= 500 else "WARN" if response.status_code >= 400 else "INFO"
+        append_log(
+            level,
+            f"{request.method} {request.url.path} -> {response.status_code} in {elapsed}ms",
+            source="http",
+            context={"request_id": request_id, "method": request.method, "path": request.url.path, "status_code": response.status_code, "duration_ms": elapsed},
+        )
+    return response
 
 
 @app.post("/api/auth/register")
@@ -358,7 +562,7 @@ def register(payload: RegisterPayload):
     }
     users.append(user)
     save_users(users)
-    append_log("INFO", f"Account registered: {email}")
+    append_log("INFO", f"Account registered: {email}", source="auth", context={"email": email, "role": "viewer"})
     return create_session(user)
 
 
@@ -366,9 +570,9 @@ def register(payload: RegisterPayload):
 def login(payload: LoginPayload):
     user = get_user_by_email(payload.email)
     if not user or not verify_password(payload.password, user["password_hash"]):
-        append_log("WARN", f"Login failed for {normalize_email(payload.email)}")
+        append_log("WARN", f"Login failed for {normalize_email(payload.email)}", source="auth", context={"email": normalize_email(payload.email)})
         raise HTTPException(status_code=401, detail="invalid_credentials")
-    append_log("INFO", f"Login success: {user['email']}")
+    append_log("INFO", f"Login success: {user['email']}", source="auth", context={"email": user["email"], "user_id": user["id"]})
     return create_session(user)
 
 
@@ -384,7 +588,7 @@ def logout(authorization: str | None = Header(default=None)):
         token = authorization.replace("Bearer ", "", 1).strip()
         session = SESSION_TOKENS.pop(token, None)
         if session:
-            append_log("INFO", f"Logout success: {session['email']}")
+            append_log("INFO", f"Logout success: {session['email']}", source="auth", context={"email": session["email"], "user_id": session["user_id"]})
     return {"ok": True}
 
 
@@ -394,12 +598,12 @@ def forgot_password(payload: ForgotPasswordPayload):
     user = get_user_by_email(email)
     response = {"ok": True, "message": "如果账号存在，重置指令已生成。"}
     if not user:
-        append_log("WARN", f"Forgot password requested for unknown account: {email}")
+        append_log("WARN", f"Forgot password requested for unknown account: {email}", source="auth", context={"email": email})
         return response
     token = secrets.token_urlsafe(8)
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=RESET_TOKEN_MINUTES)
     RESET_TOKENS[email] = {"token": token, "expires_at": expires_at}
-    append_log("INFO", f"Password reset token issued for {email}")
+    append_log("INFO", f"Password reset token issued for {email}", source="auth", context={"email": email, "expires_in_minutes": RESET_TOKEN_MINUTES})
     return {**response, "reset_token": token, "expires_in_minutes": RESET_TOKEN_MINUTES}
 
 
@@ -424,7 +628,7 @@ def reset_password(payload: ResetPasswordPayload):
             break
     save_users(users)
     RESET_TOKENS.pop(email, None)
-    append_log("INFO", f"Password reset success: {email}")
+    append_log("INFO", f"Password reset success: {email}", source="auth", context={"email": email})
     return {"ok": True, "message": "密码已更新，请重新登录。"}
 
 
@@ -461,18 +665,17 @@ def overview(authorization: str | None = Header(default=None)):
 
 
 @app.get("/api/logs")
-def logs(level: str | None = None, authorization: str | None = Header(default=None)):
+def logs(
+    level: str | None = None,
+    search: str | None = None,
+    source: str | None = None,
+    since_hours: int | None = None,
+    limit: int = 20,
+    offset: int = 0,
+    authorization: str | None = Header(default=None),
+):
     require_auth(authorization)
-    entries = LOGS
-    if level and level != "ALL":
-        entries = [entry for entry in entries if (entry["level"] if isinstance(entry, dict) else entry.level) == level]
-    result = []
-    for entry in entries:
-        if isinstance(entry, dict):
-            result.append(entry)
-        else:
-            result.append(entry.model_dump(mode="json"))
-    return result[-120:]
+    return paginate_logs(level=level, search=search, source=source, since_hours=since_hours, limit=limit, offset=offset)
 
 
 @app.get("/api/tracks")
@@ -485,14 +688,16 @@ def tracks(authorization: str | None = Header(default=None)):
 def run_analysis(payload: AnalysisPayload, authorization: str | None = Header(default=None)):
     user = require_auth(authorization)
     record = find_upload_record(payload.filename)
-    append_log("INFO", f"Tracking analysis requested by {user['email']} for {record['filename']}")
+    append_log("INFO", f"Tracking analysis requested by {user['email']} for {record['filename']}", source="analysis", context={"email": user["email"], "filename": record["filename"], "camera_id": record["camera_id"]})
     try:
         result = analyze_video_tracks(record["path"])
     except Exception as exc:
-        append_log("WARN", f"YOLO inference failed for {record['filename']}: {exc}")
+        append_log("ERROR", f"Tracking analysis crashed for {record['filename']}: {exc}", source="analysis", context={"filename": record["filename"], "camera_id": record["camera_id"], "error": str(exc)})
         raise HTTPException(status_code=500, detail=f"yolo_unavailable:{exc}") from None
+    if result["mode"] == "simulation":
+        append_log("WARN", f"Tracking analysis fallback to simulation for {record['filename']}", source="analysis", context={"filename": record["filename"], "camera_id": record["camera_id"], "mode": result["mode"]})
     apply_analysis_result(result, record)
-    append_log("INFO", f"Tracking analysis completed: {record['filename']} | model={result['mode']} | targets={result['tracked_targets']}")
+    append_log("INFO", f"Tracking analysis completed: {record['filename']} | model={result['mode']} | targets={result['tracked_targets']}", source="analysis", context={"filename": record["filename"], "camera_id": record["camera_id"], "mode": result["mode"], "tracked_targets": result["tracked_targets"], "frames_processed": result["frames_processed"]})
     return {
         "ok": True,
         "message": "人物追踪分析已完成，轨迹已同步到画布。",
@@ -540,7 +745,7 @@ async def upload_batch(
     for file, camera_id in zip(files, parsed_camera_ids):
         results.append(await store_upload(file, camera_id))
     STATE["last_batch_size"] = len(results)
-    append_log("INFO", f"Batch upload completed by {user['email']} with {len(results)} files")
+    append_log("INFO", f"Batch upload completed by {user['email']} with {len(results)} files", source="upload", context={"email": user["email"], "count": len(results), "camera_ids": parsed_camera_ids})
     return {"ok": True, "count": len(results), "items": results}
 
 
@@ -548,10 +753,12 @@ async def upload_batch(
 async def tracks_ws(websocket: WebSocket):
     token = websocket.query_params.get("token")
     if not token or token not in SESSION_TOKENS:
+        append_log("WARN", "WebSocket rejected due to invalid session token", source="ws", context={"path": "/ws/tracks"})
         await websocket.close(code=4401)
         return
 
     await websocket.accept()
+    append_log("INFO", "WebSocket stream connected", source="ws", context={"path": "/ws/tracks"})
     try:
         step = 0
         while True:
@@ -570,19 +777,11 @@ async def tracks_ws(websocket: WebSocket):
             step += 1
             await asyncio.sleep(0.8)
     except WebSocketDisconnect:
+        append_log("INFO", "WebSocket stream disconnected", source="ws", context={"path": "/ws/tracks"})
         return
-    except Exception:
+    except Exception as exc:
+        append_log("ERROR", f"WebSocket stream failed: {exc}", source="ws", context={"path": "/ws/tracks", "error": str(exc)})
         await websocket.close()
 
 app.mount('/uploads', StaticFiles(directory=str(UPLOAD_DIR)), name='uploads')
-
-
-
-
-
-
-
-
-
-
 

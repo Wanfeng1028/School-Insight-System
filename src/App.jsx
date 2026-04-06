@@ -5,8 +5,8 @@ import LineChart from "./components/LineChart";
 import TrajectoryCanvas from "./components/TrajectoryCanvas";
 import VideoTrackingPlayer from "./components/VideoTrackingPlayer";
 import {
-  initialLogs,
   logLevels,
+  logSources,
   logWindows,
   metricCards as fallbackMetricCards,
   trackSeeds,
@@ -82,8 +82,18 @@ const UI = {
   logsTitle: "事件日志",
   updatedPrefix: "最后更新",
   justNow: "刚刚",
+  logsUnavailable: "日志服务暂时不可用，仅显示当前已加载内容。",
+  logsEmpty: "当前筛选条件下暂无日志。",
+  logsSource: "来源",
+  logsContext: "上下文",
+  logsPageSize: "每页条数",
+  logsPageInfo: "第 {current} / {total} 页，共 {count} 条",
+  logsPrev: "上一页",
+  logsNext: "下一页",
   searchPlaceholder: "关键词搜索...",
   refresh: "刷新",
+  collapseSidebar: "收起侧栏",
+  expandSidebar: "展开侧栏",
   authTitle: "轨迹分析控制台",
   authSubtitle: "校园智能监控与实时轨迹分析中台",
   authLead: "面向园区安防与行为分析场景的统一控制台，覆盖视频接入、目标绑定、轨迹回放、日志审计与概览统计。",
@@ -131,12 +141,38 @@ const authFeatures = [
 const ALLOWED_SUFFIXES = [".mp4", ".avi", ".mov"];
 const MAX_UPLOAD_SIZE = 300 * 1024 * 1024;
 const TOKEN_KEY = "school-insight-token";
+const SIDEBAR_COLLAPSED_KEY = "school-insight-sidebar-collapsed";
+const LOG_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+const LOG_WINDOW_TO_HOURS = {
+  最近1小时: 1,
+  最近6小时: 6,
+  最近24小时: 24,
+};
+
+function checkPasswordStrength(password) {
+  const checks = {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    digit: /\d/.test(password),
+  };
+  const score = Object.values(checks).filter(Boolean).length;
+  return { checks, score, valid: score === 4 };
+}
 
 function formatLogTime(value) {
   const ts = new Date(value);
   if (Number.isNaN(ts.getTime())) return value;
   const pad = (n) => String(n).padStart(2, "0");
   return `${ts.getFullYear()}-${pad(ts.getMonth() + 1)}-${pad(ts.getDate())} ${pad(ts.getHours())}:${pad(ts.getMinutes())}:${pad(ts.getSeconds())}`;
+}
+
+function formatLogContext(context = {}) {
+  const entries = Object.entries(context || {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
+  if (!entries.length) return "";
+  return entries
+    .map(([key, value]) => `${key}=${Array.isArray(value) ? value.join(",") : value}`)
+    .join(" · ");
 }
 
 function makeQueueItem(file, cameraId, index) {
@@ -167,6 +203,10 @@ function parseApiError(error) {
   if (text.includes("missing_name")) return "请输入姓名。";
   if (text.includes("invalid_email")) return "请输入正确的邮箱地址。";
   if (text.includes("password_too_short")) return "密码至少 8 位。";
+  if (text.includes("password_need_uppercase")) return "密码需包含大写字母。";
+  if (text.includes("password_need_lowercase")) return "密码需包含小写字母。";
+  if (text.includes("password_need_digit")) return "密码需包含数字。";
+  if (text.includes("token_expired")) return "登录已过期，请重新登录。";
   if (text.includes("missing_token") || text.includes("invalid_token")) return "登录状态已失效，请重新登录。";
   if (text.includes("invalid_reset_token")) return "重置令牌不正确。";
   if (text.includes("reset_token_expired")) return "重置令牌已过期。";
@@ -224,12 +264,25 @@ function App() {
     trendValues: fallbackTrendValues,
     zoneDurations: fallbackZoneDurations,
   });
-  const [logs, setLogs] = useState(initialLogs);
+  const [logs, setLogs] = useState([]);
+  const [logsError, setLogsError] = useState("");
+  const [logTotal, setLogTotal] = useState(0);
+  const [logPage, setLogPage] = useState(1);
+  const [logPageSize, setLogPageSize] = useState(20);
   const [cameras, setCameras] = useState([{ id: "camera_id: 1", name: "默认摄像头" }]);
   const [lastUpdated, setLastUpdated] = useState(UI.justNow);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState("全部级别");
-  const [windowFilter] = useState("最近1小时");
+  const [sourceFilter, setSourceFilter] = useState("ALL");
+  const [windowFilter, setWindowFilter] = useState("最近1小时");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
 
   const authView = {
     login: { title: UI.login, action: UI.loginAction, desc: "使用已有账号进入监控控制台。" },
@@ -250,6 +303,18 @@ function App() {
     setWsLive(false);
     window.localStorage.removeItem(TOKEN_KEY);
   };
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((current) => !current);
+  };
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, sidebarCollapsed ? "1" : "0");
+    } catch {
+      // ignore storage write failures
+    }
+  }, [sidebarCollapsed]);
 
   const loadHealth = () => {
     return fetchHealth(token)
@@ -298,15 +363,38 @@ function App() {
       });
   };
 
-  const loadLogs = (nextLevel = levelFilter) => {
+  const loadLogs = (
+    nextLevel = levelFilter,
+    nextWindow = windowFilter,
+    nextSearch = search,
+    nextSource = sourceFilter,
+    nextPage = logPage,
+    nextPageSize = logPageSize,
+  ) => {
     const backendLevel = nextLevel === "全部级别" ? "ALL" : nextLevel;
-    return fetchLogs(token, backendLevel)
-      .then((items) => {
+    return fetchLogs(token, {
+      level: backendLevel,
+      search: nextSearch.trim(),
+      source: nextSource,
+      sinceHours: LOG_WINDOW_TO_HOURS[nextWindow] || 1,
+      limit: nextPageSize,
+      offset: (Math.max(nextPage, 1) - 1) * nextPageSize,
+    })
+      .then((data) => {
+        const items = Array.isArray(data?.items) ? data.items : [];
         setLogs(items.map((item) => ({ ...item, ts: formatLogTime(item.ts) })));
+        setLogTotal(Number(data?.total || 0));
+        setLogsError("");
         setLastUpdated(UI.justNow);
       })
-      .catch(() => {
-        setLogs(initialLogs);
+      .catch((error) => {
+        if (String(error?.message || "").includes("invalid_token")) {
+          clearSession();
+        }
+        setLogs([]);
+        setLogTotal(0);
+        setLogsError(UI.logsUnavailable);
+        setLastUpdated("日志服务异常");
       });
   };
 
@@ -343,7 +431,7 @@ function App() {
 
     loadHealth();
     loadOverview();
-    loadLogs();
+    loadLogs(levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize);
     loadCameras();
 
     const healthTimer = window.setInterval(() => {
@@ -353,7 +441,7 @@ function App() {
       loadOverview();
     }, 12000);
     const logsTimer = window.setInterval(() => {
-      loadLogs(levelFilter);
+      loadLogs(levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize);
     }, 8000);
 
     return () => {
@@ -361,12 +449,31 @@ function App() {
       window.clearInterval(overviewTimer);
       window.clearInterval(logsTimer);
     };
-  }, [token, user]);
+  }, [token, user, levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize]);
 
   useEffect(() => {
-    if (!token || !user) return;
-    loadLogs(levelFilter);
-  }, [levelFilter, token, user]);
+    setLogPage(1);
+  }, [levelFilter, windowFilter, search, sourceFilter, logPageSize]);
+
+  // 实时更新时间
+  useEffect(() => {
+    const timeTimer = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => window.clearInterval(timeTimer);
+  }, []);
+
+  // 格式化当前时间
+  const formattedDateTime = useMemo(() => {
+    const pad = (n) => String(n).padStart(2, "0");
+    const year = currentTime.getFullYear();
+    const month = pad(currentTime.getMonth() + 1);
+    const day = pad(currentTime.getDate());
+    const hours = pad(currentTime.getHours());
+    const minutes = pad(currentTime.getMinutes());
+    const seconds = pad(currentTime.getSeconds());
+    return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
+  }, [currentTime]);
 
   useEffect(() => {
     if (!token || activePage !== "monitor" || monitorMode !== "track") {
@@ -400,15 +507,15 @@ function App() {
     };
   }, [token, activePage, monitorMode]);
 
-  const visibleLogs = useMemo(() => {
-    return logs.filter((item) => {
-      const matchSearch = !search || item.text.toLowerCase().includes(search.toLowerCase());
-      return matchSearch;
-    });
-  }, [logs, search]);
+  const visibleLogs = useMemo(() => logs, [logs]);
+  const totalLogPages = useMemo(() => Math.max(1, Math.ceil(logTotal / logPageSize)), [logTotal, logPageSize]);
+  const logPageInfo = useMemo(
+    () => UI.logsPageInfo.replace("{current}", String(Math.min(logPage, totalLogPages))).replace("{total}", String(totalLogPages)).replace("{count}", String(logTotal)),
+    [logPage, totalLogPages, logTotal],
+  );
 
   const refreshLogs = () => {
-    loadLogs(levelFilter);
+    loadLogs(levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize);
   };
 
   const applyFiles = (files) => {
@@ -458,7 +565,7 @@ function App() {
       setUploadState("success");
       setUploadMessage(`${UI.uploadDone} 共 ${data.count} 个文件。`);
       setAnalysisMessage("视频已绑定完成，可以开始人物追踪分析。");
-      await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter)]);
+      await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize)]);
       setMonitorMode("track");
     } catch (error) {
       setUploadState("error");
@@ -479,7 +586,7 @@ function App() {
       setVideoUrl(resolveMediaUrl(data.video_url || health.current_video_url || ""));
       setMonitorMode("video");
       setAnalysisMessage(UI.trackingDone + " 模型：" + (data.mode === "yolo" ? "YOLOv8" : "模拟"));
-      await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter)]);
+      await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize)]);
     } catch (error) {
       setAnalysisMessage(parseApiError(error));
     } finally {
@@ -562,7 +669,6 @@ function App() {
         <div className="auth-card auth-card-wide">
           <section className="auth-showcase">
             <div className="auth-brand auth-brand-large">
-              <div className="brand-mark">SI</div>
               <div>
                 <h1>{UI.authTitle}</h1>
                 <p>{UI.authSubtitle}</p>
@@ -646,6 +752,26 @@ function App() {
                 <label>
                   <span>{UI.password}</span>
                   <input type="password" value={authForm.password} onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))} />
+                  {(authMode === "register" || authMode === "reset") && authForm.password && (
+                    <div className="password-strength-hint" style={{ fontSize: "12px", marginTop: "4px", color: "#888" }}>
+                      {(() => {
+                        const { checks, score, valid } = checkPasswordStrength(authForm.password);
+                        const items = [
+                          checks.length ? "✓" : "✗",
+                          checks.upper ? "✓" : "✗",
+                          checks.lower ? "✓" : "✗",
+                          checks.digit ? "✓" : "✗",
+                        ];
+                        const labels = ["8位以上", "大写字母", "小写字母", "数字"];
+                        const colors = valid ? "#22c55e" : score >= 2 ? "#f59e0b" : "#ef4444";
+                        return (
+                          <span style={{ color }}>
+                            密码强度: {items.map((icon, i) => `${labels[i]}${icon}`).join(" ")}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </label>
               )}
 
@@ -674,11 +800,21 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark">SI</div>
-          <div className="brand-copy">{activePage === "monitor" ? UI.brandMonitor : UI.brandConsole}</div>
+          <div className="brand-title">
+            <div className="brand-copy">{UI.brandMonitor}</div>
+          </div>
+          <button
+            className="sidebar-toggle"
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={UI.collapseSidebar}
+            title={UI.collapseSidebar}
+          >
+            ←
+          </button>
         </div>
 
         <nav className="nav-list">
@@ -688,7 +824,6 @@ function App() {
               className={`nav-item ${activePage === item.key ? "active" : ""}`}
               onClick={() => setActivePage(item.key)}
             >
-              <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
             </button>
           ))}
@@ -709,13 +844,25 @@ function App() {
         </div>
       </aside>
 
+      {sidebarCollapsed ? (
+        <button
+          className="sidebar-reveal"
+          type="button"
+          onClick={toggleSidebar}
+          aria-label={UI.expandSidebar}
+          title={UI.expandSidebar}
+        >
+          ☰
+        </button>
+      ) : null}
+
       <main className="main-panel">
         {activePage === "monitor" && (
           <>
             <header className="topbar">
               <div>
                 <h1>{UI.monitorTitle}</h1>
-                <p>{UI.monitorSubtitle}</p>
+                <p>{formattedDateTime} - 实时视频轨迹分析</p>
               </div>
               <div className="topbar-tags">
                 <span className={`status-tag ${health.api ? "success" : "info"}`}>{health.api ? UI.apiOnline : UI.apiFallback}</span>
@@ -953,18 +1100,32 @@ function App() {
                   <option key={level} value={level}>{level}</option>
                 ))}
               </select>
-              <select value={windowFilter} disabled>
+              <select value={windowFilter} onChange={(event) => setWindowFilter(event.target.value)}>
                 {logWindows.map((window) => (
                   <option key={window} value={window}>{window}</option>
+                ))}
+              </select>
+              <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
+                {logSources.map((source) => (
+                  <option key={source.value} value={source.value}>{source.label}</option>
+                ))}
+              </select>
+              <select value={logPageSize} onChange={(event) => setLogPageSize(Number(event.target.value))}>
+                {LOG_PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>{UI.logsPageSize}：{size}</option>
                 ))}
               </select>
               <button className="refresh-button" onClick={refreshLogs}>{UI.refresh}</button>
             </div>
 
+            {logsError ? <div className="upload-tip error">{logsError}</div> : null}
+            {!logsError && !visibleLogs.length ? <div className="upload-tip">{UI.logsEmpty}</div> : null}
+
             <div className="log-viewer">
               <div className="log-viewer-head">
                 <span>时间戳</span>
                 <span>级别</span>
+                <span>{UI.logsSource}</span>
                 <span>事件描述</span>
               </div>
               <div className="log-list">
@@ -972,9 +1133,21 @@ function App() {
                   <div className="log-row" key={index}>
                     <div className="log-time">{entry.ts}</div>
                     <div className={`log-level ${entry.level.toLowerCase()}`}>{entry.level}</div>
-                    <div className="log-text">{entry.text}</div>
+                    <div className={`log-source source-${(entry.source || "app").toLowerCase()}`}>{entry.source || "app"}</div>
+                    <div className="log-text-block">
+                      <div className="log-text">{entry.text}</div>
+                      {entry.context ? <div className="log-context">{formatLogContext(entry.context)}</div> : null}
+                    </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="log-pagination">
+              <span className="log-pagination-info">{logPageInfo}</span>
+              <div className="log-pagination-actions">
+                <button className="outline-blue" disabled={logPage <= 1} onClick={() => setLogPage((current) => Math.max(1, current - 1))}>{UI.logsPrev}</button>
+                <button className="outline-blue" disabled={logPage >= totalLogPages || !visibleLogs.length} onClick={() => setLogPage((current) => Math.min(totalLogPages, current + 1))}>{UI.logsNext}</button>
               </div>
             </div>
           </section>
@@ -985,10 +1158,6 @@ function App() {
 }
 
 export default App;
-
-
-
-
 
 
 

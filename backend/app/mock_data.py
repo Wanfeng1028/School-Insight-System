@@ -1,6 +1,4 @@
-﻿from datetime import datetime
-
-from .schemas import LogEntry, MetricCard, OverviewPayload, TrackFrame, ZoneDuration
+from .schemas import MetricCard, OverviewPayload, TrackFrame, ZoneDuration
 
 
 OVERVIEW_DATA = OverviewPayload(
@@ -25,14 +23,6 @@ OVERVIEW_DATA = OverviewPayload(
         ZoneDuration(name="校车点", value=54),
     ],
 )
-
-LOGS = [
-    LogEntry(ts=datetime.fromisoformat("2026-03-17T10:20:01"), level="INFO", text="System boot initiated | version 2.4.0-stable"),
-    LogEntry(ts=datetime.fromisoformat("2026-03-17T10:20:05"), level="INFO", text="WebSocket server started on port 8080"),
-    LogEntry(ts=datetime.fromisoformat("2026-03-17T10:21:12"), level="DEBUG", text="Redis connection established: redis://127.0.0.1:6379"),
-    LogEntry(ts=datetime.fromisoformat("2026-03-17T10:22:30"), level="INFO", text="Upload successfully: classroom01.mp4 (128MB)"),
-    LogEntry(ts=datetime.fromisoformat("2026-03-17T10:24:15"), level="WARN", text="FPS dropped below 15 for 2.4s (IO bottleneck)"),
-]
 
 TRACKS = [
     TrackFrame(id="child_01", color="#ff4d4f", label="child_01", points=[[140, 116], [162, 138], [188, 144], [214, 133], [238, 118]]),

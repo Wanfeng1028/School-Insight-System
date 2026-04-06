@@ -3,6 +3,7 @@ dist/
 .vscode/
 
 backend/.venv/
+backend/.venv310/
 backend/uploads/
 __pycache__/
 *.pyc
