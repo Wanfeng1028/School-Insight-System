@@ -33,7 +33,7 @@ import { API_BASE } from "./hooks/api";
 import { connectTrackStream } from "./hooks/realtime";
 
 const UI = {
-  brandMonitor: "XX校园智能监控系统",
+  brandMonitor: "School Insight 校园智能感知平台",
   brandConsole: "轨迹分析控制台",
   navMonitor: "实时监控",
   navOverview: "统计概览",
@@ -43,7 +43,7 @@ const UI = {
   subAnalyze: "视频追踪",
   logout: "退出登录",
   monitorTitle: "实时监控",
-  monitorSubtitle: "2026年03月18日 - 实时视频轨迹分析",
+  monitorSubtitle: "校园视频接入、轨迹分析与安全审计统一工作台",
   apiOnline: "API 在线",
   apiFallback: "API 离线",
   redisOnline: "Redis",
@@ -95,8 +95,8 @@ const UI = {
   collapseSidebar: "收起侧栏",
   expandSidebar: "展开侧栏",
   authTitle: "轨迹分析控制台",
-  authSubtitle: "校园智能监控与实时轨迹分析中台",
-  authLead: "面向园区安防与行为分析场景的统一控制台，覆盖视频接入、目标绑定、轨迹回放、日志审计与概览统计。",
+  authSubtitle: "School Insight · 校园智能感知与安全运营平台",
+  authLead: "为校园安防、行为分析与值班运营团队提供统一入口，集中处理视频接入、事件追踪、分析任务与审计留痕。",
   login: "登录",
   register: "注册",
   forgotPassword: "忘记密码",
@@ -109,9 +109,15 @@ const UI = {
   registerAction: "创建账号",
   forgotAction: "发送验证码",
   resetAction: "更新密码",
-  backToLogin: "返回登录",
-  authHint: "演示默认管理员：admin@school.local / Admin12345",
   codeLabel: "验证码",
+  authEmailPlaceholder: "name@school.edu.cn",
+  authPasswordPlaceholder: "请输入密码",
+  authCodePlaceholder: "输入 6 位验证码",
+  authNamePlaceholder: "请输入真实姓名",
+  authForgotTip: "验证码将发送到账号对应的找回渠道，请在收到后尽快完成重置。",
+  authResetTip: "为保证账号安全，请设置 8 位以上且包含大小写字母与数字的新密码。",
+  authLoginTip: "建议使用学校统一身份账号或已开通权限的业务账号登录。",
+  authRegisterTip: "创建账号后将进入控制台，账号权限由管理员统一分配。",
   batchTitle: "批量视频队列",
   batchEmpty: "当前未选择文件，请先拖入或点击选择视频文件。",
   bindingHeader: "绑定摄像头",
@@ -126,15 +132,15 @@ const navItems = [
 ];
 
 const authHighlights = [
-  { value: "24h", label: "持续监控", detail: "视频接入、轨迹抽样与事件审计集中管理" },
-  { value: "6+", label: "区域模型", detail: "跑道、教学楼、沙池、游乐区等场景统一绑定" },
-  { value: "WS", label: "实时轨迹", detail: "接入 WebSocket 推流与动态 Canvas 绘制链路" },
+  { value: "24×7", label: "持续值守", detail: "支持监控值班、轨迹回放、风险定位与事件审计协同处理。" },
+  { value: "多场景", label: "统一接入", detail: "覆盖教学楼、操场、通道与重点区域的视频采集与分析入口。" },
+  { value: "实时", label: "任务联动", detail: "分析任务、日志告警与轨迹画布在同一工作台闭环协作。" },
 ];
 
 const authFeatures = [
-  "登录、注册、忘记密码、重置密码一体化入口",
-  "支持批量视频绑定摄像头并进入实时轨迹监控",
-  "接入统计看板、事件日志与导出报告流程",
+  "统一登录入口，覆盖账号访问、密码找回与角色登录流转",
+  "集中管理视频绑定、分析任务、轨迹回放与事件日志",
+  "所有关键操作保留审计记录，便于值班复盘与风险追踪",
 ];
 
 const ALLOWED_SUFFIXES = [".mp4", ".avi", ".mov"];
@@ -233,12 +239,12 @@ function App() {
   const [booting, setBooting] = useState(true);
   const [authMode, setAuthMode] = useState("login");
   const [authBusy, setAuthBusy] = useState(false);
-  const [authMessage, setAuthMessage] = useState(UI.authHint);
+  const [authMessage, setAuthMessage] = useState("");
   const [authError, setAuthError] = useState(false);
   const [authForm, setAuthForm] = useState({
     name: "",
-    email: "admin@school.local",
-    password: "Admin12345",
+    email: "",
+    password: "",
     confirmPassword: "",
     resetCode: "",
   });
@@ -284,10 +290,10 @@ function App() {
   });
 
   const authView = {
-    login: { title: UI.login, action: UI.loginAction, desc: "使用已有账号进入监控控制台。" },
-    register: { title: UI.register, action: UI.registerAction, desc: "创建新账号并自动进入系统。" },
-    forgot: { title: UI.forgotPassword, action: UI.forgotAction, desc: "通过邮箱生成短时验证码。" },
-    reset: { title: UI.resetPassword, action: UI.resetAction, desc: "输入验证码后设置新的登录密码。" },
+    login: { title: UI.login, action: UI.loginAction, desc: UI.authLoginTip },
+    register: { title: UI.register, action: UI.registerAction, desc: UI.authRegisterTip },
+    forgot: { title: UI.forgotPassword, action: UI.forgotAction, desc: UI.authForgotTip },
+    reset: { title: UI.resetPassword, action: UI.resetAction, desc: UI.authResetTip },
   };
 
   const setSession = (nextToken, nextUser) => {
@@ -652,7 +658,7 @@ function App() {
     }
     clearSession();
     setAuthMode("login");
-    setAuthMessage(UI.authHint);
+    setAuthMessage("");
   };
 
   const uploadTipClass = uploadState === "success" ? "success" : uploadState === "error" ? "error" : queue.length ? "success" : "error";
@@ -668,7 +674,9 @@ function App() {
         <div className="auth-card auth-card-wide">
           <section className="auth-showcase">
             <div className="auth-brand auth-brand-large">
-              <div>
+              <div className="brand-mark">SI</div>
+              <div className="auth-brand-copy">
+                <span className="auth-brand-badge">校园安全运营</span>
                 <h1>{UI.authTitle}</h1>
                 <p>{UI.authSubtitle}</p>
               </div>
@@ -695,16 +703,12 @@ function App() {
               </ul>
             </div>
 
-            <div className="auth-demo-card">
-              <span>演示账号</span>
-              <strong>admin@school.local</strong>
-              <em>Admin12345</em>
-            </div>
           </section>
 
           <section className="auth-panel">
             <div className="auth-panel-top">
               <div>
+                <span className="auth-panel-kicker">身份验证</span>
                 <h2>{authView[authMode].title}</h2>
                 <p>{authView[authMode].desc}</p>
               </div>
@@ -718,7 +722,7 @@ function App() {
                   onClick={() => {
                     setAuthMode(key);
                     setAuthError(false);
-                    setAuthMessage(key === "login" ? UI.authHint : "请填写表单后继续。");
+                    setAuthMessage("");
                   }}
                   type="button"
                 >
@@ -731,28 +735,51 @@ function App() {
               {authMode === "register" && (
                 <label>
                   <span>{UI.displayName}</span>
-                  <input value={authForm.name} onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))} />
+                  <input
+                    value={authForm.name}
+                    placeholder={UI.authNamePlaceholder}
+                    autoComplete="name"
+                    onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))}
+                  />
                 </label>
               )}
 
               <label>
                 <span>{UI.email}</span>
-                <input type="email" value={authForm.email} onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))} />
+                <input
+                  type="email"
+                  value={authForm.email}
+                  placeholder={UI.authEmailPlaceholder}
+                  autoComplete="email"
+                  onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))}
+                />
               </label>
 
               {authMode === "reset" && (
                 <label>
                   <span>{UI.codeLabel}</span>
-                  <input value={authForm.resetCode} onChange={(event) => setAuthForm((current) => ({ ...current, resetCode: event.target.value }))} />
+                  <input
+                    value={authForm.resetCode}
+                    placeholder={UI.authCodePlaceholder}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    onChange={(event) => setAuthForm((current) => ({ ...current, resetCode: event.target.value }))}
+                  />
                 </label>
               )}
 
               {authMode !== "forgot" && (
                 <label>
                   <span>{UI.password}</span>
-                  <input type="password" value={authForm.password} onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))} />
+                  <input
+                    type="password"
+                    value={authForm.password}
+                    placeholder={UI.authPasswordPlaceholder}
+                    autoComplete={authMode === "login" ? "current-password" : "new-password"}
+                    onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))}
+                  />
                   {(authMode === "register" || authMode === "reset") && authForm.password && (
-                    <div className="password-strength-hint" style={{ fontSize: "12px", marginTop: "4px", color: "#888" }}>
+                    <div className="password-strength-hint">
                       {(() => {
                         const { checks, score, valid } = checkPasswordStrength(authForm.password);
                         const items = [
@@ -777,7 +804,13 @@ function App() {
               {(authMode === "register" || authMode === "reset") && (
                 <label>
                   <span>{UI.confirmPassword}</span>
-                  <input type="password" value={authForm.confirmPassword} onChange={(event) => setAuthForm((current) => ({ ...current, confirmPassword: event.target.value }))} />
+                  <input
+                    type="password"
+                    value={authForm.confirmPassword}
+                    placeholder={UI.authPasswordPlaceholder}
+                    autoComplete="new-password"
+                    onChange={(event) => setAuthForm((current) => ({ ...current, confirmPassword: event.target.value }))}
+                  />
                 </label>
               )}
 
@@ -786,11 +819,7 @@ function App() {
               </button>
             </form>
 
-            <div className={`auth-message ${authError ? "error" : "success"}`}>{authMessage}</div>
-
-            <div className="auth-links">
-              <button type="button" onClick={() => setAuthMode("login")}>{UI.backToLogin}</button>
-            </div>
+            {authMessage ? <div className={`auth-message ${authError ? "error" : "success"}`}>{authMessage}</div> : null}
           </section>
         </div>
       </div>
@@ -861,14 +890,6 @@ function App() {
               <div>
                 <h1>{UI.monitorTitle}</h1>
                 <p>{formattedDateTime} - 实时视频轨迹分析</p>
-              </div>
-              <div className="topbar-tags">
-                <span className={`status-tag ${health.api ? "success" : "info"}`}>{health.api ? UI.apiOnline : UI.apiFallback}</span>
-                <span className={`status-tag ${health.redis ? "success" : "info"}`}>{health.redis ? UI.redisOnline : UI.redisOffline}</span>
-                <span className={`status-tag ${wsLive ? "success" : "info"}`}>{wsLive ? UI.wsConnected : UI.wsFallback}</span>
-                <span className={`status-tag ${health.stream_active ? "success" : "info"}`}>{health.stream_active ? UI.streamRunning : UI.streamIdle}</span>
-                <span className="status-tag info">{health.camera_id}</span>
-                <span className="help-dot">i</span>
               </div>
             </header>
 
@@ -1156,5 +1177,3 @@ function App() {
 }
 
 export default App;
-
-

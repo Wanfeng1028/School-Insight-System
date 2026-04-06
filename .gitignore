@@ -11,5 +11,6 @@ backend/.venv310/
 backend/uploads/
 backend/data/events.jsonl
 backend/data/users.json
+backend/data/analysis_tasks.json
 __pycache__/
 *.pyc

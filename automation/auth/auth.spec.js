@@ -38,6 +38,11 @@ test.describe("认证页自动化", () => {
   test("支持切换登录、注册、忘记密码、重置密码视图", async ({ page }) => {
     await gotoAuthPage(page);
 
+    await expect(page.getByText("演示账号")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "返回登录" })).toHaveCount(0);
+    await expect(page.locator("label").filter({ hasText: "邮箱" }).locator("input")).toHaveValue("");
+    await expect(page.locator("label").filter({ hasText: "密码" }).locator("input")).toHaveValue("");
+
     await switchAuthMode(page, "注册");
     await expect(page.locator("label").filter({ hasText: "姓名" }).locator("input")).toBeVisible();
 
