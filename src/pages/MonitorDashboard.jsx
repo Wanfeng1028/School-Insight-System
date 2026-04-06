@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createCamera,
   deleteCamera,
@@ -56,12 +56,17 @@ function bboxToStyle([x1, y1, x2, y2]) {
 export default function MonitorDashboard({ token }) {
   const [cameras, setCameras] = useState([]);
   const [selectedCameraId, setSelectedCameraId] = useState("");
+  const [isCreatingCamera, setIsCreatingCamera] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [fullscreenCameraId, setFullscreenCameraId] = useState("");
   const [draft, setDraft] = useState(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState("info");
   const [streams, setStreams] = useState({});
+  const formPanelRef = useRef(null);
 
   const loadCameras = async ({ silent = false } = {}) => {
     if (!silent) {
@@ -70,7 +75,6 @@ export default function MonitorDashboard({ token }) {
     try {
       const items = await fetchCameras(token);
       setCameras(Array.isArray(items) ? items : []);
-      setMessage("");
     } catch (error) {
       setMessage(parseMonitorError(error));
       setMessageTone("error");
@@ -90,14 +94,14 @@ export default function MonitorDashboard({ token }) {
   }, [token]);
 
   useEffect(() => {
-    if (!selectedCameraId && cameras.length) {
+    if (!selectedCameraId && cameras.length && !isCreatingCamera) {
       setSelectedCameraId(cameras[0].id);
       return;
     }
     if (selectedCameraId && !cameras.some((camera) => camera.id === selectedCameraId)) {
       setSelectedCameraId(cameras[0]?.id || "");
     }
-  }, [cameras, selectedCameraId]);
+  }, [cameras, isCreatingCamera, selectedCameraId]);
 
   const selectedCamera = useMemo(
     () => cameras.find((camera) => camera.id === selectedCameraId) || null,
@@ -160,10 +164,45 @@ export default function MonitorDashboard({ token }) {
     [activeCameras, streams],
   );
 
+  const fullscreenCamera = useMemo(
+    () => activeCameras.find((camera) => camera.id === fullscreenCameraId) || null,
+    [activeCameras, fullscreenCameraId],
+  );
+
+  useEffect(() => {
+    if (!fullscreenCameraId) {
+      return undefined;
+    }
+
+    const handleKeydown = (event) => {
+      if (event.key === "Escape") {
+        setFullscreenCameraId("");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeydown);
+    return () => window.removeEventListener("keydown", handleKeydown);
+  }, [fullscreenCameraId]);
+
   const handleCreateNew = () => {
+    setIsCreatingCamera(true);
     setSelectedCameraId("");
     setDraft({ ...EMPTY_FORM });
     setMessage("");
+    setIsDeleteConfirmOpen(false);
+    setIsEditorOpen(true);
+  };
+
+  const handleEditCamera = (cameraId) => {
+    setIsCreatingCamera(false);
+    setSelectedCameraId(cameraId);
+    setIsDeleteConfirmOpen(false);
+    setIsEditorOpen(true);
+  };
+
+  const handleCloseEditor = () => {
+    setIsDeleteConfirmOpen(false);
+    setIsEditorOpen(false);
   };
 
   const handleSave = async () => {
@@ -172,13 +211,17 @@ export default function MonitorDashboard({ token }) {
       if (selectedCamera) {
         await updateCamera(token, selectedCamera.id, draft);
         setMessage("摄像头配置已更新。");
+        setIsCreatingCamera(false);
       } else {
         const created = await createCamera(token, draft);
+        setIsCreatingCamera(false);
         setSelectedCameraId(created.id);
         setMessage("摄像头已创建。");
       }
       setMessageTone("success");
       await loadCameras({ silent: true });
+      setIsDeleteConfirmOpen(false);
+      setIsEditorOpen(false);
     } catch (error) {
       setMessage(parseMonitorError(error));
       setMessageTone("error");
@@ -195,7 +238,10 @@ export default function MonitorDashboard({ token }) {
       setMessage("摄像头已删除。");
       setMessageTone("success");
       setSelectedCameraId("");
+      setIsCreatingCamera(false);
       await loadCameras({ silent: true });
+      setIsDeleteConfirmOpen(false);
+      setIsEditorOpen(false);
     } catch (error) {
       setMessage(parseMonitorError(error));
       setMessageTone("error");
@@ -224,6 +270,14 @@ export default function MonitorDashboard({ token }) {
     }
   };
 
+  const openFullscreen = (cameraId) => {
+    setFullscreenCameraId(cameraId);
+  };
+
+  const closeFullscreen = () => {
+    setFullscreenCameraId("");
+  };
+
   return (
     <section className="monitor-dashboard">
       <header className="monitor-dashboard-head">
@@ -237,7 +291,7 @@ export default function MonitorDashboard({ token }) {
         </div>
       </header>
 
-      {message ? <div className={`monitor-feedback ${messageTone}`}>{message}</div> : null}
+      {message && messageTone === "error" ? <div className={`monitor-feedback ${messageTone}`}>{message}</div> : null}
 
       <div className="monitor-layout">
         <div className="camera-grid" data-testid="camera-grid">
@@ -271,6 +325,9 @@ export default function MonitorDashboard({ token }) {
                   <span>FPS：{runtime.fps || 0}</span>
                   <span>目标：{runtime.active_targets || payload.boxes?.length || 0}</span>
                 </div>
+                <div className="camera-tile-actions">
+                  <button className="camera-fullscreen-button" data-testid="camera-fullscreen-trigger" type="button" onClick={() => openFullscreen(camera.id)}>进入全屏</button>
+                </div>
                 {runtime.last_error ? <div className="camera-error">{runtime.last_error}</div> : null}
               </article>
             );
@@ -286,17 +343,35 @@ export default function MonitorDashboard({ token }) {
             <div className="camera-list">
               {cameras.map((camera) => {
                 const status = getStatusMeta(camera.runtime || {});
+                const isEditing = !isCreatingCamera && selectedCameraId === camera.id;
                 return (
-                  <button className={`camera-list-item ${selectedCameraId === camera.id ? "active" : ""}`} data-testid="camera-list-item" type="button" key={camera.id} onClick={() => setSelectedCameraId(camera.id)}>
-                    <div>
+                  <div
+                    className={`camera-list-item ${isEditing ? "active editing" : ""}`}
+                    data-testid="camera-list-item"
+                    key={camera.id}
+                  >
+                    <div className="camera-list-main">
                       <strong>{camera.name}</strong>
                       <span>{camera.source_type} / {camera.id}</span>
                     </div>
                     <div className="camera-list-actions">
+                      <button
+                        className={`camera-edit-button ${isEditing ? "active" : ""}`}
+                        data-testid="camera-edit-trigger"
+                        type="button"
+                        aria-label={`编辑摄像头 ${camera.name}`}
+                        title={`编辑摄像头 ${camera.name}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleEditCamera(camera.id);
+                        }}
+                      >
+                        ✎
+                      </button>
                       <span className={`camera-status ${status.tone}`}>{status.label}</span>
-                      <span className="camera-inline-action" onClick={(event) => { event.stopPropagation(); handleToggle(camera); }}>{camera.enabled ? "停止" : "启动"}</span>
+                      <button className="camera-inline-action" type="button" onClick={(event) => { event.stopPropagation(); handleToggle(camera); }}>{camera.enabled ? "停止" : "启动"}</button>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -304,8 +379,41 @@ export default function MonitorDashboard({ token }) {
 
           <section className="monitor-panel">
             <div className="monitor-panel-head">
-              <h2>{selectedCamera ? "编辑摄像头" : "新建摄像头"}</h2>
-              <span>{selectedCamera ? selectedCamera.id : "mock"}</span>
+              <h2>活跃目标</h2>
+              <span>{liveTargets.length} 个</span>
+            </div>
+            {!liveTargets.length ? <div className="camera-empty compact">当前暂无活跃目标，启动 mock 摄像头后会自动生成演示框。</div> : null}
+            <div className="live-target-list">
+              {liveTargets.map((target) => (
+                <button className="live-target-item" type="button" key={`${target.cameraId}-${target.trackId}`} onClick={() => setSelectedCameraId(target.cameraId)}>
+                  <span className="live-target-dot" style={{ background: target.color || "#2f6df6" }} />
+                  <div>
+                    <strong>{target.label}</strong>
+                    <span>{target.cameraName} · 置信度 {Math.round((target.conf || 0) * 100)}%</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      {isEditorOpen ? (
+        <div className="camera-editor-modal-backdrop" data-testid="camera-editor-modal" onClick={handleCloseEditor}>
+          <section
+            className="camera-editor-modal"
+            aria-labelledby="camera-editor-title"
+            aria-modal="true"
+            ref={formPanelRef}
+            role="dialog"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="camera-editor-modal-head">
+              <div>
+                <h2 id="camera-editor-title">{selectedCamera && !isCreatingCamera ? "编辑摄像头" : "新建摄像头"}</h2>
+                <p>{selectedCamera && !isCreatingCamera ? selectedCamera.name : "填写摄像头配置后即可创建并纳入监控列表。"}</p>
+              </div>
+              <button aria-label="关闭编辑窗口" className="camera-modal-close" type="button" onClick={handleCloseEditor}>×</button>
             </div>
             <div className="camera-form">
               <label>
@@ -334,31 +442,69 @@ export default function MonitorDashboard({ token }) {
               </label>
             </div>
             <div className="camera-form-actions">
-              <button className="primary-button" type="button" disabled={saving} onClick={handleSave}>{saving ? "保存中..." : selectedCamera ? "保存修改" : "创建摄像头"}</button>
-              {selectedCamera ? <button className="outline-blue danger" type="button" disabled={saving} onClick={handleDelete}>删除</button> : null}
+              <button className="primary-button" type="button" disabled={saving} onClick={handleSave}>{saving ? "保存中..." : selectedCamera && !isCreatingCamera ? "保存修改" : "创建摄像头"}</button>
+              {selectedCamera && !isCreatingCamera ? (
+                <div className="camera-delete-wrap">
+                  <button
+                    className="outline-blue danger"
+                    type="button"
+                    disabled={saving}
+                    onClick={() => setIsDeleteConfirmOpen((current) => !current)}
+                  >
+                    删除
+                  </button>
+                  {isDeleteConfirmOpen ? (
+                    <div className="camera-delete-confirm" data-testid="camera-delete-confirm">
+                      <strong>确认删除该摄像头？</strong>
+                      <span>删除后将从监控配置列表中移除，且无法恢复。</span>
+                      <div className="camera-delete-confirm-actions">
+                        <button type="button" onClick={() => setIsDeleteConfirmOpen(false)}>取消</button>
+                        <button className="danger-solid" type="button" disabled={saving} onClick={handleDelete}>确认删除</button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </section>
+        </div>
+      ) : null}
 
-          <section className="monitor-panel">
-            <div className="monitor-panel-head">
-              <h2>活跃目标</h2>
-              <span>{liveTargets.length} 个</span>
+      {fullscreenCamera ? (
+        <div className="camera-fullscreen-backdrop" data-testid="camera-fullscreen" onClick={closeFullscreen}>
+          <section className="camera-fullscreen-panel" onClick={(event) => event.stopPropagation()}>
+            <div className="camera-fullscreen-head">
+              <div>
+                <span className="camera-fullscreen-kicker">实时单路查看</span>
+                <h2>{fullscreenCamera.name}</h2>
+                <p>{fullscreenCamera.id}</p>
+              </div>
+              <div className="camera-fullscreen-head-actions">
+                <span className={`camera-status ${getStatusMeta(fullscreenCamera.runtime || {}).tone}`}>{getStatusMeta(fullscreenCamera.runtime || {}).label}</span>
+                <button className="camera-fullscreen-close" type="button" aria-label="退出全屏" onClick={closeFullscreen}>退出全屏</button>
+              </div>
             </div>
-            {!liveTargets.length ? <div className="camera-empty compact">当前暂无活跃目标，启动 mock 摄像头后会自动生成演示框。</div> : null}
-            <div className="live-target-list">
-              {liveTargets.map((target) => (
-                <button className="live-target-item" type="button" key={`${target.cameraId}-${target.trackId}`} onClick={() => setSelectedCameraId(target.cameraId)}>
-                  <span className="live-target-dot" style={{ background: target.color || "#2f6df6" }} />
-                  <div>
-                    <strong>{target.label}</strong>
-                    <span>{target.cameraName} · 置信度 {Math.round((target.conf || 0) * 100)}%</span>
+
+            <div className="camera-fullscreen-stage">
+              <img src={getCameraMjpegUrl(fullscreenCamera.id, token)} alt={fullscreenCamera.name} />
+              <div className="camera-overlay">
+                {((streams[fullscreenCamera.id]?.boxes) || []).map((box) => (
+                  <div className="camera-bbox" key={`fullscreen-${fullscreenCamera.id}-${box.track_id}`} style={bboxToStyle(box.bbox)}>
+                    <span>{box.label}</span>
                   </div>
-                </button>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            <div className="camera-fullscreen-meta">
+              <span>模型：{fullscreenCamera.runtime?.model || "mock"}</span>
+              <span>FPS：{fullscreenCamera.runtime?.fps || 0}</span>
+              <span>目标：{fullscreenCamera.runtime?.active_targets || streams[fullscreenCamera.id]?.boxes?.length || 0}</span>
+              <span>状态：{getStatusMeta(fullscreenCamera.runtime || {}).label}</span>
             </div>
           </section>
-        </aside>
-      </div>
+        </div>
+      ) : null}
     </section>
   );
 }

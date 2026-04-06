@@ -24,7 +24,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "./.venv310/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000",
+      command: "python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000",
       cwd: "./backend",
       url: "http://127.0.0.1:8000/docs",
       reuseExistingServer: true,

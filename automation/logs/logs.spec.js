@@ -19,7 +19,7 @@ async function loginAsAdmin(page) {
   await page.locator("label").filter({ hasText: "邮箱" }).locator("input").fill(ADMIN_EMAIL);
   await page.locator("label").filter({ hasText: "密码" }).locator("input").fill(ADMIN_PASSWORD);
   await page.getByRole("button", { name: "进入系统" }).click();
-  await expect(page.getByRole("button", { name: "退出登录" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "实时监控大屏" })).toBeVisible();
 }
 
 async function openLogsPage(page) {
