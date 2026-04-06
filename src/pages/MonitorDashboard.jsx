@@ -232,7 +232,7 @@ export default function MonitorDashboard({ token }) {
           <p>多路摄像头实时预览、目标框叠加、状态诊断与活跃目标联动。</p>
         </div>
         <div className="monitor-dashboard-actions">
-          <button className="outline-blue" type="button" onClick={handleCreateNew}>新建摄像头</button>
+          <button className="outline-blue" data-testid="camera-create-trigger" type="button" onClick={handleCreateNew}>新建摄像头</button>
           <span className="monitor-dashboard-count">启用中 {activeCameras.length} / 总数 {cameras.length}</span>
         </div>
       </header>
@@ -287,7 +287,7 @@ export default function MonitorDashboard({ token }) {
               {cameras.map((camera) => {
                 const status = getStatusMeta(camera.runtime || {});
                 return (
-                  <button className={`camera-list-item ${selectedCameraId === camera.id ? "active" : ""}`} type="button" key={camera.id} onClick={() => setSelectedCameraId(camera.id)}>
+                  <button className={`camera-list-item ${selectedCameraId === camera.id ? "active" : ""}`} data-testid="camera-list-item" type="button" key={camera.id} onClick={() => setSelectedCameraId(camera.id)}>
                     <div>
                       <strong>{camera.name}</strong>
                       <span>{camera.source_type} / {camera.id}</span>
