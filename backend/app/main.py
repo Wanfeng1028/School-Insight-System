@@ -29,13 +29,13 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_SUFFIXES = {".mp4", ".avi", ".mov"}
 MAX_UPLOAD_SIZE = 300 * 1024 * 1024
-RESET_TOKEN_MINUTES = 15
+RESET_CODE_MINUTES = 15
 SESSION_EXPIRE_HOURS = 24
 MAX_LOG_ENTRIES = 1000
 EMAIL_PATTERN = re.compile(r"\b([A-Za-z0-9._%+-])([A-Za-z0-9._%+-]*)(@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b")
 EXCLUDED_REQUEST_LOG_PATHS = {"/api/logs"}
 SESSION_TOKENS: dict[str, dict] = {}
-RESET_TOKENS: dict[str, dict] = {}
+RESET_CODES: dict[str, dict] = {}
 UPLOADED_VIDEOS: list[dict] = []
 LOGS: deque[dict] = deque(maxlen=MAX_LOG_ENTRIES)
 CAMERAS = [
@@ -600,11 +600,11 @@ def forgot_password(payload: ForgotPasswordPayload):
     if not user:
         append_log("WARN", f"Forgot password requested for unknown account: {email}", source="auth", context={"email": email})
         return response
-    token = secrets.token_urlsafe(8)
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=RESET_TOKEN_MINUTES)
-    RESET_TOKENS[email] = {"token": token, "expires_at": expires_at}
-    append_log("INFO", f"Password reset token issued for {email}", source="auth", context={"email": email, "expires_in_minutes": RESET_TOKEN_MINUTES})
-    return {**response, "reset_token": token, "expires_in_minutes": RESET_TOKEN_MINUTES}
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=RESET_CODE_MINUTES)
+    RESET_CODES[email] = {"code": code, "expires_at": expires_at}
+    append_log("INFO", f"Password reset verification code issued for {email}", source="auth", context={"email": email, "expires_in_minutes": RESET_CODE_MINUTES})
+    return {**response, "verification_code": code, "expires_in_minutes": RESET_CODE_MINUTES}
 
 
 @app.post("/api/auth/reset-password")
@@ -612,14 +612,15 @@ def reset_password(payload: ResetPasswordPayload):
     validate_password(payload.password)
     email = normalize_email(payload.email)
     user = get_user_by_email(email)
-    token_data = RESET_TOKENS.get(email)
-    if not user or not token_data:
+    code_data = RESET_CODES.get(email)
+    verification_code = (payload.code or payload.token or "").strip()
+    if not user or not code_data:
         raise HTTPException(status_code=400, detail="invalid_reset_request")
-    if token_data["token"] != payload.token:
-        raise HTTPException(status_code=400, detail="invalid_reset_token")
-    if token_data["expires_at"] < datetime.now(timezone.utc):
-        RESET_TOKENS.pop(email, None)
-        raise HTTPException(status_code=400, detail="reset_token_expired")
+    if code_data["code"] != verification_code:
+        raise HTTPException(status_code=400, detail="invalid_reset_code")
+    if code_data["expires_at"] < datetime.now(timezone.utc):
+        RESET_CODES.pop(email, None)
+        raise HTTPException(status_code=400, detail="reset_code_expired")
 
     users = load_users()
     for item in users:
@@ -627,7 +628,7 @@ def reset_password(payload: ResetPasswordPayload):
             item["password_hash"] = hash_password(payload.password)
             break
     save_users(users)
-    RESET_TOKENS.pop(email, None)
+    RESET_CODES.pop(email, None)
     append_log("INFO", f"Password reset success: {email}", source="auth", context={"email": email})
     return {"ok": True, "message": "密码已更新，请重新登录。"}
 
@@ -784,4 +785,3 @@ async def tracks_ws(websocket: WebSocket):
         await websocket.close()
 
 app.mount('/uploads', StaticFiles(directory=str(UPLOAD_DIR)), name='uploads')
-

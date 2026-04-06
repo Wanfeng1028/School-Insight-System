@@ -46,7 +46,7 @@ test.describe("认证页自动化", () => {
     await expect(page.locator("label").filter({ hasText: "密码" }).locator("input")).toHaveCount(0);
 
     await switchAuthMode(page, "重置密码");
-    await expect(page.locator("label").filter({ hasText: "重置令牌" }).locator("input")).toBeVisible();
+    await expect(page.locator("label").filter({ hasText: "验证码" }).locator("input")).toBeVisible();
     await expect(page.locator("label").filter({ hasText: "确认密码" }).locator("input")).toBeVisible();
 
     await switchAuthMode(page, "登录");
@@ -108,15 +108,15 @@ test.describe("认证页自动化", () => {
 
     await switchAuthMode(page, "忘记密码");
     await fillInputByLabel(page, "邮箱", user.email);
-    await submitAuth(page, "发送重置令牌");
-    await expect(page.locator(".auth-message")).toContainText("重置令牌：");
+    await submitAuth(page, "发送验证码");
+    await expect(page.locator(".auth-message")).toContainText("验证码：");
 
-    const tokenMatch = (await page.locator(".auth-message").textContent())?.match(/重置令牌：([^，]+)/);
-    expect(tokenMatch?.[1]).toBeTruthy();
+    const codeMatch = (await page.locator(".auth-message").textContent())?.match(/验证码：([^，]+)/);
+    expect(codeMatch?.[1]).toBeTruthy();
 
     await expect(page.locator(".auth-panel h2")).toHaveText("重置密码");
     await fillInputByLabel(page, "邮箱", user.email);
-    await fillInputByLabel(page, "重置令牌", tokenMatch[1]);
+    await fillInputByLabel(page, "验证码", codeMatch[1]);
     await fillInputByLabel(page, "密码", user.nextPassword, 0);
     await fillInputByLabel(page, "确认密码", user.nextPassword);
     await submitAuth(page, "更新密码");

@@ -107,12 +107,11 @@ const UI = {
   displayName: "姓名",
   loginAction: "进入系统",
   registerAction: "创建账号",
-  forgotAction: "发送重置令牌",
+  forgotAction: "发送验证码",
   resetAction: "更新密码",
-  switchToReset: "已有令牌，直接重置密码",
   backToLogin: "返回登录",
   authHint: "演示默认管理员：admin@school.local / Admin12345",
-  tokenLabel: "重置令牌",
+  codeLabel: "验证码",
   batchTitle: "批量视频队列",
   batchEmpty: "当前未选择文件，请先拖入或点击选择视频文件。",
   bindingHeader: "绑定摄像头",
@@ -208,9 +207,9 @@ function parseApiError(error) {
   if (text.includes("password_need_digit")) return "密码需包含数字。";
   if (text.includes("token_expired")) return "登录已过期，请重新登录。";
   if (text.includes("missing_token") || text.includes("invalid_token")) return "登录状态已失效，请重新登录。";
-  if (text.includes("invalid_reset_token")) return "重置令牌不正确。";
-  if (text.includes("reset_token_expired")) return "重置令牌已过期。";
-  if (text.includes("invalid_reset_request")) return "重置请求无效，请重新获取令牌。";
+  if (text.includes("invalid_reset_code") || text.includes("invalid_reset_token")) return "验证码不正确。";
+  if (text.includes("reset_code_expired") || text.includes("reset_token_expired")) return "验证码已过期。";
+  if (text.includes("invalid_reset_request")) return "重置请求无效，请重新获取验证码。";
   if (text.includes("unsupported_file_type")) return UI.badType;
   if (text.includes("file_too_large")) return UI.tooLarge;
   if (text.includes("camera_ids_length_mismatch")) return "批量绑定数据不完整，请重新选择文件。";
@@ -241,7 +240,7 @@ function App() {
     email: "admin@school.local",
     password: "Admin12345",
     confirmPassword: "",
-    resetToken: "",
+    resetCode: "",
   });
   const [user, setUser] = useState(null);
   const [activePage, setActivePage] = useState("monitor");
@@ -287,8 +286,8 @@ function App() {
   const authView = {
     login: { title: UI.login, action: UI.loginAction, desc: "使用已有账号进入监控控制台。" },
     register: { title: UI.register, action: UI.registerAction, desc: "创建新账号并自动进入系统。" },
-    forgot: { title: UI.forgotPassword, action: UI.forgotAction, desc: "通过邮箱生成短时重置令牌。" },
-    reset: { title: UI.resetPassword, action: UI.resetAction, desc: "输入令牌后设置新的登录密码。" },
+    forgot: { title: UI.forgotPassword, action: UI.forgotAction, desc: "通过邮箱生成短时验证码。" },
+    reset: { title: UI.resetPassword, action: UI.resetAction, desc: "输入验证码后设置新的登录密码。" },
   };
 
   const setSession = (nextToken, nextUser) => {
@@ -625,14 +624,14 @@ function App() {
         setAuthMessage("注册成功，已自动登录。");
       } else if (authMode === "forgot") {
         const data = await forgotPassword({ email: authForm.email });
-        setAuthForm((current) => ({ ...current, resetToken: data.reset_token || current.resetToken }));
-        setAuthMessage(data.reset_token ? `重置令牌：${data.reset_token}，15 分钟内有效。` : "如果账号存在，重置令牌已生成。");
+        setAuthForm((current) => ({ ...current, resetCode: data.verification_code || current.resetCode }));
+        setAuthMessage(data.verification_code ? `验证码：${data.verification_code}，15 分钟内有效。` : "如果账号存在，验证码已生成。");
         setAuthMode("reset");
       } else {
         if (authForm.password !== authForm.confirmPassword) {
           throw new Error("confirm_mismatch");
         }
-        const data = await resetPassword({ email: authForm.email, token: authForm.resetToken, password: authForm.password });
+        const data = await resetPassword({ email: authForm.email, code: authForm.resetCode, password: authForm.password });
         setAuthMessage(data.message);
         setAuthMode("login");
       }
@@ -743,8 +742,8 @@ function App() {
 
               {authMode === "reset" && (
                 <label>
-                  <span>{UI.tokenLabel}</span>
-                  <input value={authForm.resetToken} onChange={(event) => setAuthForm((current) => ({ ...current, resetToken: event.target.value }))} />
+                  <span>{UI.codeLabel}</span>
+                  <input value={authForm.resetCode} onChange={(event) => setAuthForm((current) => ({ ...current, resetCode: event.target.value }))} />
                 </label>
               )}
 
@@ -763,7 +762,7 @@ function App() {
                           checks.digit ? "✓" : "✗",
                         ];
                         const labels = ["8位以上", "大写字母", "小写字母", "数字"];
-                        const colors = valid ? "#22c55e" : score >= 2 ? "#f59e0b" : "#ef4444";
+                        const color = valid ? "#22c55e" : score >= 2 ? "#f59e0b" : "#ef4444";
                         return (
                           <span style={{ color }}>
                             密码强度: {items.map((icon, i) => `${labels[i]}${icon}`).join(" ")}
@@ -789,8 +788,7 @@ function App() {
 
             <div className={`auth-message ${authError ? "error" : "success"}`}>{authMessage}</div>
 
-            <div className="auth-links auth-links-split">
-              <button type="button" onClick={() => setAuthMode("reset")}>{UI.switchToReset}</button>
+            <div className="auth-links">
               <button type="button" onClick={() => setAuthMode("login")}>{UI.backToLogin}</button>
             </div>
           </section>
@@ -1158,7 +1156,5 @@ function App() {
 }
 
 export default App;
-
-
 
 

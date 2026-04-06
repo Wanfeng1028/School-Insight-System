@@ -61,7 +61,8 @@ class ForgotPasswordPayload(BaseModel):
 
 class ResetPasswordPayload(BaseModel):
     email: str
-    token: str
+    code: str | None = None
+    token: str | None = None
     password: str
 
 
