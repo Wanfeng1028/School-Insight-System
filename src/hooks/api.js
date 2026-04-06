@@ -112,6 +112,47 @@ export function fetchCameras(token) {
   });
 }
 
+export function createCamera(token, payload) {
+  return requestJson("/api/cameras", {
+    method: "POST",
+    headers: getHeaders(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateCamera(token, cameraId, payload) {
+  return requestJson(`/api/cameras/${encodeURIComponent(cameraId)}`, {
+    method: "PATCH",
+    headers: getHeaders(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteCamera(token, cameraId) {
+  return requestJson(`/api/cameras/${encodeURIComponent(cameraId)}`, {
+    method: "DELETE",
+    headers: getHeaders(token),
+  });
+}
+
+export function startCamera(token, cameraId) {
+  return requestJson(`/api/cameras/${encodeURIComponent(cameraId)}/start`, {
+    method: "POST",
+    headers: getHeaders(token),
+  });
+}
+
+export function stopCamera(token, cameraId) {
+  return requestJson(`/api/cameras/${encodeURIComponent(cameraId)}/stop`, {
+    method: "POST",
+    headers: getHeaders(token),
+  });
+}
+
+export function getCameraMjpegUrl(cameraId, token) {
+  return `${API_BASE}/api/cameras/${encodeURIComponent(cameraId)}/mjpeg?token=${encodeURIComponent(token)}`;
+}
+
 export function runTrackingAnalysis(token, filename = null) {
   return requestJson("/api/analysis/run", {
     method: "POST",

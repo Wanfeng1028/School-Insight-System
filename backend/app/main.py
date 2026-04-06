@@ -12,12 +12,14 @@ from uuid import uuid4
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .analytics import analyze_video_tracks
+from .camera_store import CameraStore
 from .mock_data import OVERVIEW_DATA, TRACKS
-from .schemas import AnalysisPayload, ForgotPasswordPayload, LoginPayload, RegisterPayload, ResetPasswordPayload, TrackFrame
+from .realtime_monitor import RealtimeMonitorService
+from .schemas import AnalysisPayload, CameraCreatePayload, CameraUpdatePayload, ForgotPasswordPayload, LoginPayload, RegisterPayload, ResetPasswordPayload, TrackFrame
 
 app = FastAPI(title="School Insight System API", version="0.3.0")
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +27,7 @@ UPLOAD_DIR = ROOT / "uploads"
 DATA_DIR = ROOT / "data"
 USERS_FILE = DATA_DIR / "users.json"
 LOG_FILE = DATA_DIR / "events.jsonl"
+CAMERAS_FILE = DATA_DIR / "cameras.json"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_SUFFIXES = {".mp4", ".avi", ".mov"}
@@ -38,14 +41,8 @@ SESSION_TOKENS: dict[str, dict] = {}
 RESET_CODES: dict[str, dict] = {}
 UPLOADED_VIDEOS: list[dict] = []
 LOGS: deque[dict] = deque(maxlen=MAX_LOG_ENTRIES)
-CAMERAS = [
-    {"id": "camera_id: 1", "name": "北门通道"},
-    {"id": "camera_id: 2", "name": "操场跑道"},
-    {"id": "camera_id: 3", "name": "教学楼一层"},
-    {"id": "camera_id: 4", "name": "沙池活动区"},
-    {"id": "camera_id: 5", "name": "游乐区东侧"},
-    {"id": "camera_id: 6", "name": "校车候车点"},
-]
+CAMERA_STORE = CameraStore(CAMERAS_FILE)
+REALTIME_MONITOR = RealtimeMonitorService()
 
 app.add_middleware(
     CORSMiddleware,
@@ -68,7 +65,7 @@ STATE = {
     "redis": False,
     "ws": True,
     "stream_active": False,
-    "camera_id": "camera_id: 1",
+    "camera_id": CAMERA_STORE.list()[0]["id"] if CAMERA_STORE.list() else "camera_id: 1",
     "current_file": None,
     "current_file_path": None,
     "current_stored_as": None,
@@ -319,6 +316,12 @@ def get_current_user(authorization: str | None) -> dict:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="missing_token")
     token = authorization.replace("Bearer ", "", 1).strip()
+    return get_current_user_by_token(token)
+
+
+def get_current_user_by_token(token: str | None) -> dict:
+    if not token:
+        raise HTTPException(status_code=401, detail="missing_token")
     session = SESSION_TOKENS.get(token)
     if not session:
         raise HTTPException(status_code=401, detail="invalid_token")
@@ -343,6 +346,28 @@ def get_current_user(authorization: str | None) -> dict:
 
 def require_auth(authorization: str | None) -> dict:
     return get_current_user(authorization)
+
+
+def require_session_token(token: str | None) -> dict:
+    return get_current_user_by_token(token)
+
+
+def require_admin(authorization: str | None) -> dict:
+    user = require_auth(authorization)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="forbidden")
+    return user
+
+
+def get_camera_or_404(camera_id: str) -> dict:
+    camera = CAMERA_STORE.get(camera_id)
+    if not camera:
+        raise HTTPException(status_code=404, detail="camera_not_found")
+    return camera
+
+
+def list_camera_views() -> list[dict]:
+    return REALTIME_MONITOR.list_views(CAMERA_STORE.list())
 
 
 def active_track_count() -> int:
@@ -508,6 +533,19 @@ ensure_seed_user()
 append_log("INFO", "Application startup complete", source="system")
 
 
+@app.on_event("startup")
+async def startup_realtime_monitors():
+    for camera in CAMERA_STORE.list():
+        REALTIME_MONITOR.ensure_runtime(camera["id"])
+        if camera.get("enabled"):
+            await REALTIME_MONITOR.start_camera(camera, append_log)
+
+
+@app.on_event("shutdown")
+async def shutdown_realtime_monitors():
+    await REALTIME_MONITOR.stop_all(append_log)
+
+
 @app.middleware("http")
 async def capture_request_logs(request: Request, call_next):
     started = perf_counter()
@@ -656,7 +694,77 @@ def health(authorization: str | None = Header(default=None)):
 @app.get("/api/cameras")
 def cameras(authorization: str | None = Header(default=None)):
     require_auth(authorization)
-    return CAMERAS
+    return list_camera_views()
+
+
+@app.post("/api/cameras")
+async def create_camera(payload: CameraCreatePayload, authorization: str | None = Header(default=None)):
+    user = require_admin(authorization)
+    if not payload.name.strip():
+        raise HTTPException(status_code=400, detail="missing_camera_name")
+    camera = CAMERA_STORE.create(payload.model_dump())
+    REALTIME_MONITOR.ensure_runtime(camera["id"])
+    if camera.get("enabled"):
+        await REALTIME_MONITOR.start_camera(camera, append_log)
+    append_log("INFO", f"Camera created: {camera['name']}", source="camera", context={"camera_id": camera["id"], "email": user["email"], "source_type": camera["source_type"]})
+    return REALTIME_MONITOR.camera_view(camera)
+
+
+@app.patch("/api/cameras/{camera_id}")
+async def update_camera(camera_id: str, payload: CameraUpdatePayload, authorization: str | None = Header(default=None)):
+    user = require_admin(authorization)
+    current = get_camera_or_404(camera_id)
+    changes = payload.model_dump(exclude_none=True)
+    if "name" in changes and not str(changes["name"]).strip():
+        raise HTTPException(status_code=400, detail="missing_camera_name")
+    camera = CAMERA_STORE.update(camera_id, changes)
+    if not camera:
+        raise HTTPException(status_code=404, detail="camera_not_found")
+    REALTIME_MONITOR.ensure_runtime(camera_id)
+    if camera.get("enabled"):
+        await REALTIME_MONITOR.start_camera(camera, append_log)
+    else:
+        await REALTIME_MONITOR.stop_camera(camera_id, append_log)
+    append_log("INFO", f"Camera updated: {camera['name']}", source="camera", context={"camera_id": camera_id, "email": user["email"], "from_enabled": current.get("enabled"), "to_enabled": camera.get("enabled")})
+    return REALTIME_MONITOR.camera_view(camera)
+
+
+@app.delete("/api/cameras/{camera_id}")
+async def delete_camera(camera_id: str, authorization: str | None = Header(default=None)):
+    user = require_admin(authorization)
+    camera = CAMERA_STORE.delete(camera_id)
+    if not camera:
+        raise HTTPException(status_code=404, detail="camera_not_found")
+    await REALTIME_MONITOR.stop_camera(camera_id, append_log)
+    append_log("INFO", f"Camera deleted: {camera['name']}", source="camera", context={"camera_id": camera_id, "email": user["email"]})
+    return {"ok": True, "camera_id": camera_id}
+
+
+@app.post("/api/cameras/{camera_id}/start")
+async def start_camera(camera_id: str, authorization: str | None = Header(default=None)):
+    user = require_admin(authorization)
+    camera = get_camera_or_404(camera_id)
+    camera = CAMERA_STORE.update(camera_id, {"enabled": True}) or camera
+    runtime = await REALTIME_MONITOR.start_camera(camera, append_log)
+    append_log("INFO", f"Camera start requested: {camera['name']}", source="camera", context={"camera_id": camera_id, "email": user["email"]})
+    return {"ok": True, "camera": REALTIME_MONITOR.camera_view(camera), "runtime": runtime}
+
+
+@app.post("/api/cameras/{camera_id}/stop")
+async def stop_camera(camera_id: str, authorization: str | None = Header(default=None)):
+    user = require_admin(authorization)
+    camera = get_camera_or_404(camera_id)
+    CAMERA_STORE.update(camera_id, {"enabled": False})
+    runtime = await REALTIME_MONITOR.stop_camera(camera_id, append_log)
+    append_log("INFO", f"Camera stop requested: {camera['name']}", source="camera", context={"camera_id": camera_id, "email": user["email"]})
+    return {"ok": True, "camera_id": camera_id, "runtime": runtime}
+
+
+@app.get("/api/cameras/{camera_id}/mjpeg")
+async def camera_mjpeg(camera_id: str, token: str | None = None):
+    get_camera_or_404(camera_id)
+    require_session_token(token)
+    return StreamingResponse(REALTIME_MONITOR.mjpeg_stream(camera_id), media_type="multipart/x-mixed-replace; boundary=frame")
 
 
 @app.get("/api/overview")
@@ -748,6 +856,30 @@ async def upload_batch(
     STATE["last_batch_size"] = len(results)
     append_log("INFO", f"Batch upload completed by {user['email']} with {len(results)} files", source="upload", context={"email": user["email"], "count": len(results), "camera_ids": parsed_camera_ids})
     return {"ok": True, "count": len(results), "items": results}
+
+
+@app.websocket("/ws/cameras/{camera_id}/inference")
+async def camera_inference_ws(websocket: WebSocket, camera_id: str):
+    token = websocket.query_params.get("token")
+    try:
+        user = require_session_token(token)
+        camera = get_camera_or_404(camera_id)
+    except HTTPException:
+        await websocket.close(code=4401)
+        return
+
+    await websocket.accept()
+    append_log("INFO", "Camera inference stream connected", source="camera", context={"camera_id": camera_id, "email": user["email"], "path": f"/ws/cameras/{camera_id}/inference"})
+    try:
+        while True:
+            await websocket.send_json(REALTIME_MONITOR.build_inference_payload(camera_id))
+            await asyncio.sleep(0.2)
+    except WebSocketDisconnect:
+        append_log("INFO", "Camera inference stream disconnected", source="camera", context={"camera_id": camera_id, "email": user["email"]})
+        return
+    except Exception as exc:
+        append_log("ERROR", f"Camera inference stream failed: {exc}", source="camera", context={"camera_id": camera_id, "email": user["email"], "camera_name": camera["name"]})
+        await websocket.close()
 
 
 @app.websocket("/ws/tracks")

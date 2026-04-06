@@ -38,3 +38,26 @@ export function connectTrackStream({ token, onMessage, onError }) {
   return socket;
 }
 
+
+export function connectCameraInferenceStream({ cameraId, token, onMessage, onError }) {
+  const query = token ? `?token=${encodeURIComponent(token)}` : "";
+  const path = `/ws/cameras/${encodeURIComponent(cameraId)}/inference${query}`;
+  const socket = new WebSocket(`${getWebSocketBase(API_BASE)}${path}`);
+
+  socket.onmessage = (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+      if (payload.type === "inference") {
+        onMessage(payload);
+      }
+    } catch (error) {
+      onError?.(error);
+    }
+  };
+
+  socket.onerror = (error) => {
+    onError?.(error);
+  };
+
+  return socket;
+}
