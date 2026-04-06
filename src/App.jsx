@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import AuthBackground from "./components/AuthBackground";
 import BarChart from "./components/BarChart";
 import LineChart from "./components/LineChart";
+import MonitorDashboard from "./pages/MonitorDashboard";
 import TrajectoryCanvas from "./components/TrajectoryCanvas";
 import VideoTrackingPlayer from "./components/VideoTrackingPlayer";
 import {
@@ -884,133 +885,7 @@ function App() {
       ) : null}
 
       <main className="main-panel">
-        {activePage === "monitor" && (
-          <>
-            <header className="topbar">
-              <div>
-                <h1>{UI.monitorTitle}</h1>
-                <p>{formattedDateTime} - 实时视频轨迹分析</p>
-              </div>
-            </header>
-
-            <section className="monitor-grid">
-              <div className="subnav-row">
-                <div className="subnav-tabs">
-                  <button className={`subnav-button ${monitorMode === "upload" ? "active" : ""}`} onClick={() => setMonitorMode("upload")}>{UI.subUpload}</button>
-                  <button className={`subnav-button ${monitorMode === "track" ? "active" : ""}`} onClick={() => setMonitorMode("track")}>{UI.subTrack}</button>
-                  <button className={`subnav-button ${monitorMode === "video" ? "active" : ""}`} onClick={() => setMonitorMode("video")}>{UI.subAnalyze}</button>
-                </div>
-              </div>
-
-              <div className={`analysis-banner ${analysisBusy ? "busy" : ""}`}>
-                <div>
-                  <strong>人物追踪分析</strong>
-                  <span>{analysisMessage}</span>
-                </div>
-                <button className="analysis-trigger" onClick={handleTrackingAnalysis} disabled={analysisBusy}>
-                  {analysisBusy ? UI.trackingRunning : UI.trackingStart}
-                </button>
-              </div>
-
-              {monitorMode === "upload" ? (
-                <div className="upload-card">
-                  <div className="upload-placeholder">
-                    <div className="upload-icon">VID</div>
-                    <h2>{UI.uploadWaiting}</h2>
-                    <p>{UI.uploadHint}</p>
-                  </div>
-                  <label
-                    className={`dropzone ${dragActive ? "drag-active" : ""}`}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      setDragActive(true);
-                    }}
-                    onDragLeave={() => setDragActive(false)}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      setDragActive(false);
-                      applyFiles(event.dataTransfer.files);
-                    }}
-                  >
-                    <input
-                      type="file"
-                      multiple
-                      accept=".mp4,.avi,.mov"
-                      onChange={(event) => applyFiles(event.target.files)}
-                    />
-                    <div className="dropzone-plus">+</div>
-                    <strong>{UI.chooseFile}</strong>
-                    <em>{UI.dragFile}</em>
-                    <span>{UI.fileTypes}</span>
-                  </label>
-
-                  <div className="batch-board">
-                    <div className="batch-board-head">
-                      <h3>{UI.batchTitle}</h3>
-                      <span>{UI.batchCount}：{queue.length}</span>
-                    </div>
-                    {queue.length ? (
-                      <div className="batch-list">
-                        {queue.map((entry, index) => (
-                          <div className="batch-row" key={entry.id}>
-                            <div className="batch-file">
-                              <strong>{index + 1}. {entry.file.name}</strong>
-                              <span>{(entry.file.size / 1024 / 1024).toFixed(2)} MB</span>
-                            </div>
-                            <select value={entry.cameraId} onChange={(event) => updateQueueCamera(entry.id, event.target.value)}>
-                              {cameras.map((camera) => (
-                                <option key={camera.id} value={camera.id}>{camera.id} / {camera.name}</option>
-                              ))}
-                            </select>
-                            <span className={`queue-badge ${entry.status}`}>{entry.message}</span>
-                            <button className="queue-remove" type="button" onClick={() => removeQueueItem(entry.id)}>移除</button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="batch-empty">{UI.batchEmpty}</div>
-                    )}
-                  </div>
-
-                  <button className="primary-button" onClick={handleBatchUpload} disabled={uploadState === "uploading"}>
-                    {uploadState === "uploading" ? UI.uploading : UI.uploadBind}
-                  </button>
-                  <div className={`upload-tip ${uploadTipClass}`}>{uploadMessage}</div>
-                </div>
-              ) : monitorMode === "track" ? (
-                <div className="track-card">
-                  <div className="track-card-head">
-                    <h2>轨迹画布</h2>
-                    <span>{UI.trackHint}</span>
-                  </div>
-                  <div className="trajectory-stage">
-                    <TrajectoryCanvas tracks={tracks} />
-                    <div className="stage-overlay">
-                      <div className={`stage-status ${wsLive ? "online" : "muted"}`}>
-                        <div className="stage-led" />
-                        <span>{wsLive ? UI.wsConnected : UI.wsFallback}</span>
-                      </div>
-                    </div>
-                    <div className="stage-controls">
-                      <span>实时轨迹</span>
-                      <div className="stage-timeline" />
-                      <button className="stage-button">LIVE</button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <VideoTrackingPlayer
-                  videoUrl={videoUrl}
-                  tracks={tracks}
-                  detections={analysisDetections}
-                  title={UI.trackingPanelTitle}
-                  meta={UI.trackingPanelHint}
-                  analysisBusy={analysisBusy}
-                />
-              )}
-            </section>
-          </>
-        )}
+        {activePage === "monitor" && <MonitorDashboard token={token} />}
 
         {activePage === "overview" && (
           <>
