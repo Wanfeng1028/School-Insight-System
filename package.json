@@ -6,7 +6,19 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173 --strictPort",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "npm run automation:smoke",
+    "automation:smoke": "playwright test automation/auth automation/monitor",
+    "automation:all": "playwright test automation",
+    "automation:auth": "playwright test automation/auth",
+    "automation:auth:headed": "playwright test automation/auth --headed",
+    "automation:auth:debug": "playwright test automation/auth --debug",
+    "automation:logs": "playwright test automation/logs",
+    "automation:logs:headed": "playwright test automation/logs --headed",
+    "automation:logs:debug": "playwright test automation/logs --debug",
+    "automation:monitor": "playwright test automation/monitor",
+    "automation:monitor:headed": "playwright test automation/monitor --headed",
+    "automation:monitor:debug": "playwright test automation/monitor --debug"
   },
   "dependencies": {
     "echarts": "^5.6.0",
@@ -14,9 +26,8 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@vitejs/plugin-react": "^4.3.4",
     "vite": "^5.4.10"
   }
 }
-
-

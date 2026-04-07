@@ -1,4 +1,4 @@
-﻿export const metricCards = [
+export const metricCards = [
   { label: "\u4eca\u65e5\u91c7\u96c6\u70b9\u6570", value: "12,580", delta: "+12%", accent: "positive" },
   { label: "\u6d3b\u8dc3\u513f\u7ae5 (Children)", value: "18", delta: "\u76ee\u6807\u8bc6\u522b\u7a33\u5b9a", accent: "muted" },
   { label: "\u6d3b\u8dc3\u533a\u57df\u8ba1\u6570 (Active Zones)", value: "6", delta: "+2 \u9ad8\u9891\u533a", accent: "warning" },
@@ -14,21 +14,19 @@ export const zoneDurations = [
   { name: "\u6e38\u4e50\u533a", value: 77 },
 ];
 
-export const logLevels = ["\u5168\u90e8\u7ea7\u522b", "INFO", "DEBUG", "WARN"];
+export const logLevels = ["全部级别", "INFO", "DEBUG", "WARN", "ERROR"];
 export const logWindows = ["\u6700\u8fd11\u5c0f\u65f6", "\u6700\u8fd16\u5c0f\u65f6", "\u6700\u8fd124\u5c0f\u65f6"];
-
-export const initialLogs = [
-  { ts: "2026-03-17 10:20:01", level: "INFO", text: "System boot initiated | version 2.4.0-stable" },
-  { ts: "2026-03-17 10:20:05", level: "INFO", text: "WebSocket server started on port 8080" },
-  { ts: "2026-03-17 10:21:12", level: "DEBUG", text: "Redis connection established: redis://127.0.0.1:6379" },
-  { ts: "2026-03-17 10:22:30", level: "INFO", text: "Upload successfully: classroom01.mp4 (128MB)" },
-  { ts: "2026-03-17 10:22:45", level: "INFO", text: "API Binding camera_id: 1 matched metadata" },
-  { ts: "2026-03-17 10:23:00", level: "INFO", text: "Stream running. Analytics thread [0xAF4] started." },
-  { ts: "2026-03-17 10:23:05", level: "DEBUG", text: "Track point payload received: {id: \"child_01\", x: 120, y: 450}" },
-  { ts: "2026-03-17 10:23:10", level: "DEBUG", text: "Track point payload received: {id: \"child_02\", x: 340, y: 210}" },
-  { ts: "2026-03-17 10:24:15", level: "WARN", text: "FPS dropped below 15 for 2.4s (IO bottleneck)" },
-  { ts: "2026-03-17 10:25:00", level: "INFO", text: "Batch persist 512 track points to PostgreSQL" },
+export const logSources = [
+  { value: "ALL", label: "全部来源" },
+  { value: "auth", label: "认证" },
+  { value: "http", label: "请求" },
+  { value: "upload", label: "上传" },
+  { value: "analysis", label: "分析" },
+  { value: "ws", label: "WebSocket" },
+  { value: "system", label: "系统" },
 ];
+
+export const initialLogs = [];
 
 export const trackSeeds = [
   {

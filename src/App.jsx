@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import AuthBackground from "./components/AuthBackground";
 import BarChart from "./components/BarChart";
 import LineChart from "./components/LineChart";
+import MonitorDashboard from "./pages/MonitorDashboard";
 import TrajectoryCanvas from "./components/TrajectoryCanvas";
 import VideoTrackingPlayer from "./components/VideoTrackingPlayer";
 import {
-  initialLogs,
   logLevels,
+  logSources,
   logWindows,
   metricCards as fallbackMetricCards,
   trackSeeds,
@@ -33,7 +34,7 @@ import { API_BASE } from "./hooks/api";
 import { connectTrackStream } from "./hooks/realtime";
 
 const UI = {
-  brandMonitor: "XX校园智能监控系统",
+  brandMonitor: "School Insight 校园智能感知平台",
   brandConsole: "轨迹分析控制台",
   navMonitor: "实时监控",
   navOverview: "统计概览",
@@ -43,7 +44,7 @@ const UI = {
   subAnalyze: "视频追踪",
   logout: "退出登录",
   monitorTitle: "实时监控",
-  monitorSubtitle: "2026年03月18日 - 实时视频轨迹分析",
+  monitorSubtitle: "校园视频接入、轨迹分析与安全审计统一工作台",
   apiOnline: "API 在线",
   apiFallback: "API 离线",
   redisOnline: "Redis",
@@ -82,11 +83,21 @@ const UI = {
   logsTitle: "事件日志",
   updatedPrefix: "最后更新",
   justNow: "刚刚",
+  logsUnavailable: "日志服务暂时不可用，仅显示当前已加载内容。",
+  logsEmpty: "当前筛选条件下暂无日志。",
+  logsSource: "来源",
+  logsContext: "上下文",
+  logsPageSize: "每页条数",
+  logsPageInfo: "第 {current} / {total} 页，共 {count} 条",
+  logsPrev: "上一页",
+  logsNext: "下一页",
   searchPlaceholder: "关键词搜索...",
   refresh: "刷新",
+  collapseSidebar: "收起侧栏",
+  expandSidebar: "展开侧栏",
   authTitle: "轨迹分析控制台",
-  authSubtitle: "校园智能监控与实时轨迹分析中台",
-  authLead: "面向园区安防与行为分析场景的统一控制台，覆盖视频接入、目标绑定、轨迹回放、日志审计与概览统计。",
+  authSubtitle: "School Insight · 校园智能感知与安全运营平台",
+  authLead: "为校园安防、行为分析与值班运营团队提供统一入口，集中处理视频接入、事件追踪、分析任务与审计留痕。",
   login: "登录",
   register: "注册",
   forgotPassword: "忘记密码",
@@ -97,12 +108,17 @@ const UI = {
   displayName: "姓名",
   loginAction: "进入系统",
   registerAction: "创建账号",
-  forgotAction: "发送重置令牌",
+  forgotAction: "发送验证码",
   resetAction: "更新密码",
-  switchToReset: "已有令牌，直接重置密码",
-  backToLogin: "返回登录",
-  authHint: "演示默认管理员：admin@school.local / Admin12345",
-  tokenLabel: "重置令牌",
+  codeLabel: "验证码",
+  authEmailPlaceholder: "name@school.edu.cn",
+  authPasswordPlaceholder: "请输入密码",
+  authCodePlaceholder: "输入 6 位验证码",
+  authNamePlaceholder: "请输入真实姓名",
+  authForgotTip: "验证码将发送到账号对应的找回渠道，请在收到后尽快完成重置。",
+  authResetTip: "为保证账号安全，请设置 8 位以上且包含大小写字母与数字的新密码。",
+  authLoginTip: "建议使用学校统一身份账号或已开通权限的业务账号登录。",
+  authRegisterTip: "创建账号后将进入控制台，账号权限由管理员统一分配。",
   batchTitle: "批量视频队列",
   batchEmpty: "当前未选择文件，请先拖入或点击选择视频文件。",
   bindingHeader: "绑定摄像头",
@@ -117,26 +133,52 @@ const navItems = [
 ];
 
 const authHighlights = [
-  { value: "24h", label: "持续监控", detail: "视频接入、轨迹抽样与事件审计集中管理" },
-  { value: "6+", label: "区域模型", detail: "跑道、教学楼、沙池、游乐区等场景统一绑定" },
-  { value: "WS", label: "实时轨迹", detail: "接入 WebSocket 推流与动态 Canvas 绘制链路" },
+  { value: "24×7", label: "持续值守", detail: "支持监控值班、轨迹回放、风险定位与事件审计协同处理。" },
+  { value: "多场景", label: "统一接入", detail: "覆盖教学楼、操场、通道与重点区域的视频采集与分析入口。" },
+  { value: "实时", label: "任务联动", detail: "分析任务、日志告警与轨迹画布在同一工作台闭环协作。" },
 ];
 
 const authFeatures = [
-  "登录、注册、忘记密码、重置密码一体化入口",
-  "支持批量视频绑定摄像头并进入实时轨迹监控",
-  "接入统计看板、事件日志与导出报告流程",
+  "统一登录入口，覆盖账号访问、密码找回与角色登录流转",
+  "集中管理视频绑定、分析任务、轨迹回放与事件日志",
+  "所有关键操作保留审计记录，便于值班复盘与风险追踪",
 ];
 
 const ALLOWED_SUFFIXES = [".mp4", ".avi", ".mov"];
 const MAX_UPLOAD_SIZE = 300 * 1024 * 1024;
 const TOKEN_KEY = "school-insight-token";
+const SIDEBAR_COLLAPSED_KEY = "school-insight-sidebar-collapsed";
+const LOG_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+const LOG_WINDOW_TO_HOURS = {
+  最近1小时: 1,
+  最近6小时: 6,
+  最近24小时: 24,
+};
+
+function checkPasswordStrength(password) {
+  const checks = {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    digit: /\d/.test(password),
+  };
+  const score = Object.values(checks).filter(Boolean).length;
+  return { checks, score, valid: score === 4 };
+}
 
 function formatLogTime(value) {
   const ts = new Date(value);
   if (Number.isNaN(ts.getTime())) return value;
   const pad = (n) => String(n).padStart(2, "0");
   return `${ts.getFullYear()}-${pad(ts.getMonth() + 1)}-${pad(ts.getDate())} ${pad(ts.getHours())}:${pad(ts.getMinutes())}:${pad(ts.getSeconds())}`;
+}
+
+function formatLogContext(context = {}) {
+  const entries = Object.entries(context || {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
+  if (!entries.length) return "";
+  return entries
+    .map(([key, value]) => `${key}=${Array.isArray(value) ? value.join(",") : value}`)
+    .join(" · ");
 }
 
 function makeQueueItem(file, cameraId, index) {
@@ -167,10 +209,14 @@ function parseApiError(error) {
   if (text.includes("missing_name")) return "请输入姓名。";
   if (text.includes("invalid_email")) return "请输入正确的邮箱地址。";
   if (text.includes("password_too_short")) return "密码至少 8 位。";
+  if (text.includes("password_need_uppercase")) return "密码需包含大写字母。";
+  if (text.includes("password_need_lowercase")) return "密码需包含小写字母。";
+  if (text.includes("password_need_digit")) return "密码需包含数字。";
+  if (text.includes("token_expired")) return "登录已过期，请重新登录。";
   if (text.includes("missing_token") || text.includes("invalid_token")) return "登录状态已失效，请重新登录。";
-  if (text.includes("invalid_reset_token")) return "重置令牌不正确。";
-  if (text.includes("reset_token_expired")) return "重置令牌已过期。";
-  if (text.includes("invalid_reset_request")) return "重置请求无效，请重新获取令牌。";
+  if (text.includes("invalid_reset_code") || text.includes("invalid_reset_token")) return "验证码不正确。";
+  if (text.includes("reset_code_expired") || text.includes("reset_token_expired")) return "验证码已过期。";
+  if (text.includes("invalid_reset_request")) return "重置请求无效，请重新获取验证码。";
   if (text.includes("unsupported_file_type")) return UI.badType;
   if (text.includes("file_too_large")) return UI.tooLarge;
   if (text.includes("camera_ids_length_mismatch")) return "批量绑定数据不完整，请重新选择文件。";
@@ -194,14 +240,14 @@ function App() {
   const [booting, setBooting] = useState(true);
   const [authMode, setAuthMode] = useState("login");
   const [authBusy, setAuthBusy] = useState(false);
-  const [authMessage, setAuthMessage] = useState(UI.authHint);
+  const [authMessage, setAuthMessage] = useState("");
   const [authError, setAuthError] = useState(false);
   const [authForm, setAuthForm] = useState({
     name: "",
-    email: "admin@school.local",
-    password: "Admin12345",
+    email: "",
+    password: "",
     confirmPassword: "",
-    resetToken: "",
+    resetCode: "",
   });
   const [user, setUser] = useState(null);
   const [activePage, setActivePage] = useState("monitor");
@@ -224,18 +270,31 @@ function App() {
     trendValues: fallbackTrendValues,
     zoneDurations: fallbackZoneDurations,
   });
-  const [logs, setLogs] = useState(initialLogs);
+  const [logs, setLogs] = useState([]);
+  const [logsError, setLogsError] = useState("");
+  const [logTotal, setLogTotal] = useState(0);
+  const [logPage, setLogPage] = useState(1);
+  const [logPageSize, setLogPageSize] = useState(20);
   const [cameras, setCameras] = useState([{ id: "camera_id: 1", name: "默认摄像头" }]);
   const [lastUpdated, setLastUpdated] = useState(UI.justNow);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState("全部级别");
-  const [windowFilter] = useState("最近1小时");
+  const [sourceFilter, setSourceFilter] = useState("ALL");
+  const [windowFilter, setWindowFilter] = useState("最近1小时");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
 
   const authView = {
-    login: { title: UI.login, action: UI.loginAction, desc: "使用已有账号进入监控控制台。" },
-    register: { title: UI.register, action: UI.registerAction, desc: "创建新账号并自动进入系统。" },
-    forgot: { title: UI.forgotPassword, action: UI.forgotAction, desc: "通过邮箱生成短时重置令牌。" },
-    reset: { title: UI.resetPassword, action: UI.resetAction, desc: "输入令牌后设置新的登录密码。" },
+    login: { title: UI.login, action: UI.loginAction, desc: UI.authLoginTip },
+    register: { title: UI.register, action: UI.registerAction, desc: UI.authRegisterTip },
+    forgot: { title: UI.forgotPassword, action: UI.forgotAction, desc: UI.authForgotTip },
+    reset: { title: UI.resetPassword, action: UI.resetAction, desc: UI.authResetTip },
   };
 
   const setSession = (nextToken, nextUser) => {
@@ -250,6 +309,18 @@ function App() {
     setWsLive(false);
     window.localStorage.removeItem(TOKEN_KEY);
   };
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((current) => !current);
+  };
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, sidebarCollapsed ? "1" : "0");
+    } catch {
+      // ignore storage write failures
+    }
+  }, [sidebarCollapsed]);
 
   const loadHealth = () => {
     return fetchHealth(token)
@@ -298,15 +369,38 @@ function App() {
       });
   };
 
-  const loadLogs = (nextLevel = levelFilter) => {
+  const loadLogs = (
+    nextLevel = levelFilter,
+    nextWindow = windowFilter,
+    nextSearch = search,
+    nextSource = sourceFilter,
+    nextPage = logPage,
+    nextPageSize = logPageSize,
+  ) => {
     const backendLevel = nextLevel === "全部级别" ? "ALL" : nextLevel;
-    return fetchLogs(token, backendLevel)
-      .then((items) => {
+    return fetchLogs(token, {
+      level: backendLevel,
+      search: nextSearch.trim(),
+      source: nextSource,
+      sinceHours: LOG_WINDOW_TO_HOURS[nextWindow] || 1,
+      limit: nextPageSize,
+      offset: (Math.max(nextPage, 1) - 1) * nextPageSize,
+    })
+      .then((data) => {
+        const items = Array.isArray(data?.items) ? data.items : [];
         setLogs(items.map((item) => ({ ...item, ts: formatLogTime(item.ts) })));
+        setLogTotal(Number(data?.total || 0));
+        setLogsError("");
         setLastUpdated(UI.justNow);
       })
-      .catch(() => {
-        setLogs(initialLogs);
+      .catch((error) => {
+        if (String(error?.message || "").includes("invalid_token")) {
+          clearSession();
+        }
+        setLogs([]);
+        setLogTotal(0);
+        setLogsError(UI.logsUnavailable);
+        setLastUpdated("日志服务异常");
       });
   };
 
@@ -343,7 +437,7 @@ function App() {
 
     loadHealth();
     loadOverview();
-    loadLogs();
+    loadLogs(levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize);
     loadCameras();
 
     const healthTimer = window.setInterval(() => {
@@ -353,7 +447,7 @@ function App() {
       loadOverview();
     }, 12000);
     const logsTimer = window.setInterval(() => {
-      loadLogs(levelFilter);
+      loadLogs(levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize);
     }, 8000);
 
     return () => {
@@ -361,12 +455,31 @@ function App() {
       window.clearInterval(overviewTimer);
       window.clearInterval(logsTimer);
     };
-  }, [token, user]);
+  }, [token, user, levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize]);
 
   useEffect(() => {
-    if (!token || !user) return;
-    loadLogs(levelFilter);
-  }, [levelFilter, token, user]);
+    setLogPage(1);
+  }, [levelFilter, windowFilter, search, sourceFilter, logPageSize]);
+
+  // 实时更新时间
+  useEffect(() => {
+    const timeTimer = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => window.clearInterval(timeTimer);
+  }, []);
+
+  // 格式化当前时间
+  const formattedDateTime = useMemo(() => {
+    const pad = (n) => String(n).padStart(2, "0");
+    const year = currentTime.getFullYear();
+    const month = pad(currentTime.getMonth() + 1);
+    const day = pad(currentTime.getDate());
+    const hours = pad(currentTime.getHours());
+    const minutes = pad(currentTime.getMinutes());
+    const seconds = pad(currentTime.getSeconds());
+    return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
+  }, [currentTime]);
 
   useEffect(() => {
     if (!token || activePage !== "monitor" || monitorMode !== "track") {
@@ -400,15 +513,15 @@ function App() {
     };
   }, [token, activePage, monitorMode]);
 
-  const visibleLogs = useMemo(() => {
-    return logs.filter((item) => {
-      const matchSearch = !search || item.text.toLowerCase().includes(search.toLowerCase());
-      return matchSearch;
-    });
-  }, [logs, search]);
+  const visibleLogs = useMemo(() => logs, [logs]);
+  const totalLogPages = useMemo(() => Math.max(1, Math.ceil(logTotal / logPageSize)), [logTotal, logPageSize]);
+  const logPageInfo = useMemo(
+    () => UI.logsPageInfo.replace("{current}", String(Math.min(logPage, totalLogPages))).replace("{total}", String(totalLogPages)).replace("{count}", String(logTotal)),
+    [logPage, totalLogPages, logTotal],
+  );
 
   const refreshLogs = () => {
-    loadLogs(levelFilter);
+    loadLogs(levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize);
   };
 
   const applyFiles = (files) => {
@@ -458,7 +571,7 @@ function App() {
       setUploadState("success");
       setUploadMessage(`${UI.uploadDone} 共 ${data.count} 个文件。`);
       setAnalysisMessage("视频已绑定完成，可以开始人物追踪分析。");
-      await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter)]);
+      await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize)]);
       setMonitorMode("track");
     } catch (error) {
       setUploadState("error");
@@ -479,7 +592,7 @@ function App() {
       setVideoUrl(resolveMediaUrl(data.video_url || health.current_video_url || ""));
       setMonitorMode("video");
       setAnalysisMessage(UI.trackingDone + " 模型：" + (data.mode === "yolo" ? "YOLOv8" : "模拟"));
-      await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter)]);
+      await Promise.all([loadHealth(), loadOverview(), loadLogs(levelFilter, windowFilter, search, sourceFilter, logPage, logPageSize)]);
     } catch (error) {
       setAnalysisMessage(parseApiError(error));
     } finally {
@@ -518,14 +631,14 @@ function App() {
         setAuthMessage("注册成功，已自动登录。");
       } else if (authMode === "forgot") {
         const data = await forgotPassword({ email: authForm.email });
-        setAuthForm((current) => ({ ...current, resetToken: data.reset_token || current.resetToken }));
-        setAuthMessage(data.reset_token ? `重置令牌：${data.reset_token}，15 分钟内有效。` : "如果账号存在，重置令牌已生成。");
+        setAuthForm((current) => ({ ...current, resetCode: data.verification_code || current.resetCode }));
+        setAuthMessage(data.verification_code ? `验证码：${data.verification_code}，15 分钟内有效。` : "如果账号存在，验证码已生成。");
         setAuthMode("reset");
       } else {
         if (authForm.password !== authForm.confirmPassword) {
           throw new Error("confirm_mismatch");
         }
-        const data = await resetPassword({ email: authForm.email, token: authForm.resetToken, password: authForm.password });
+        const data = await resetPassword({ email: authForm.email, code: authForm.resetCode, password: authForm.password });
         setAuthMessage(data.message);
         setAuthMode("login");
       }
@@ -546,7 +659,7 @@ function App() {
     }
     clearSession();
     setAuthMode("login");
-    setAuthMessage(UI.authHint);
+    setAuthMessage("");
   };
 
   const uploadTipClass = uploadState === "success" ? "success" : uploadState === "error" ? "error" : queue.length ? "success" : "error";
@@ -563,7 +676,8 @@ function App() {
           <section className="auth-showcase">
             <div className="auth-brand auth-brand-large">
               <div className="brand-mark">SI</div>
-              <div>
+              <div className="auth-brand-copy">
+                <span className="auth-brand-badge">校园安全运营</span>
                 <h1>{UI.authTitle}</h1>
                 <p>{UI.authSubtitle}</p>
               </div>
@@ -590,16 +704,12 @@ function App() {
               </ul>
             </div>
 
-            <div className="auth-demo-card">
-              <span>演示账号</span>
-              <strong>admin@school.local</strong>
-              <em>Admin12345</em>
-            </div>
           </section>
 
           <section className="auth-panel">
             <div className="auth-panel-top">
               <div>
+                <span className="auth-panel-kicker">身份验证</span>
                 <h2>{authView[authMode].title}</h2>
                 <p>{authView[authMode].desc}</p>
               </div>
@@ -613,7 +723,7 @@ function App() {
                   onClick={() => {
                     setAuthMode(key);
                     setAuthError(false);
-                    setAuthMessage(key === "login" ? UI.authHint : "请填写表单后继续。");
+                    setAuthMessage("");
                   }}
                   type="button"
                 >
@@ -626,33 +736,82 @@ function App() {
               {authMode === "register" && (
                 <label>
                   <span>{UI.displayName}</span>
-                  <input value={authForm.name} onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))} />
+                  <input
+                    value={authForm.name}
+                    placeholder={UI.authNamePlaceholder}
+                    autoComplete="name"
+                    onChange={(event) => setAuthForm((current) => ({ ...current, name: event.target.value }))}
+                  />
                 </label>
               )}
 
               <label>
                 <span>{UI.email}</span>
-                <input type="email" value={authForm.email} onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))} />
+                <input
+                  type="email"
+                  value={authForm.email}
+                  placeholder={UI.authEmailPlaceholder}
+                  autoComplete="email"
+                  onChange={(event) => setAuthForm((current) => ({ ...current, email: event.target.value }))}
+                />
               </label>
 
               {authMode === "reset" && (
                 <label>
-                  <span>{UI.tokenLabel}</span>
-                  <input value={authForm.resetToken} onChange={(event) => setAuthForm((current) => ({ ...current, resetToken: event.target.value }))} />
+                  <span>{UI.codeLabel}</span>
+                  <input
+                    value={authForm.resetCode}
+                    placeholder={UI.authCodePlaceholder}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    onChange={(event) => setAuthForm((current) => ({ ...current, resetCode: event.target.value }))}
+                  />
                 </label>
               )}
 
               {authMode !== "forgot" && (
                 <label>
                   <span>{UI.password}</span>
-                  <input type="password" value={authForm.password} onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))} />
+                  <input
+                    type="password"
+                    value={authForm.password}
+                    placeholder={UI.authPasswordPlaceholder}
+                    autoComplete={authMode === "login" ? "current-password" : "new-password"}
+                    onChange={(event) => setAuthForm((current) => ({ ...current, password: event.target.value }))}
+                  />
+                  {(authMode === "register" || authMode === "reset") && authForm.password && (
+                    <div className="password-strength-hint">
+                      {(() => {
+                        const { checks, score, valid } = checkPasswordStrength(authForm.password);
+                        const items = [
+                          checks.length ? "✓" : "✗",
+                          checks.upper ? "✓" : "✗",
+                          checks.lower ? "✓" : "✗",
+                          checks.digit ? "✓" : "✗",
+                        ];
+                        const labels = ["8位以上", "大写字母", "小写字母", "数字"];
+                        const color = valid ? "#22c55e" : score >= 2 ? "#f59e0b" : "#ef4444";
+                        return (
+                          <span style={{ color }}>
+                            密码强度: {items.map((icon, i) => `${labels[i]}${icon}`).join(" ")}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </label>
               )}
 
               {(authMode === "register" || authMode === "reset") && (
                 <label>
                   <span>{UI.confirmPassword}</span>
-                  <input type="password" value={authForm.confirmPassword} onChange={(event) => setAuthForm((current) => ({ ...current, confirmPassword: event.target.value }))} />
+                  <input
+                    type="password"
+                    value={authForm.confirmPassword}
+                    placeholder={UI.authPasswordPlaceholder}
+                    autoComplete="new-password"
+                    onChange={(event) => setAuthForm((current) => ({ ...current, confirmPassword: event.target.value }))}
+                  />
                 </label>
               )}
 
@@ -661,12 +820,7 @@ function App() {
               </button>
             </form>
 
-            <div className={`auth-message ${authError ? "error" : "success"}`}>{authMessage}</div>
-
-            <div className="auth-links auth-links-split">
-              <button type="button" onClick={() => setAuthMode("reset")}>{UI.switchToReset}</button>
-              <button type="button" onClick={() => setAuthMode("login")}>{UI.backToLogin}</button>
-            </div>
+            {authMessage ? <div className={`auth-message ${authError ? "error" : "success"}`}>{authMessage}</div> : null}
           </section>
         </div>
       </div>
@@ -674,11 +828,21 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark">SI</div>
-          <div className="brand-copy">{activePage === "monitor" ? UI.brandMonitor : UI.brandConsole}</div>
+          <div className="brand-title">
+            <div className="brand-copy">{UI.brandMonitor}</div>
+          </div>
+          <button
+            className="sidebar-toggle"
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={UI.collapseSidebar}
+            title={UI.collapseSidebar}
+          >
+            ←
+          </button>
         </div>
 
         <nav className="nav-list">
@@ -688,7 +852,6 @@ function App() {
               className={`nav-item ${activePage === item.key ? "active" : ""}`}
               onClick={() => setActivePage(item.key)}
             >
-              <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
             </button>
           ))}
@@ -709,142 +872,20 @@ function App() {
         </div>
       </aside>
 
+      {sidebarCollapsed ? (
+        <button
+          className="sidebar-reveal"
+          type="button"
+          onClick={toggleSidebar}
+          aria-label={UI.expandSidebar}
+          title={UI.expandSidebar}
+        >
+          ☰
+        </button>
+      ) : null}
+
       <main className="main-panel">
-        {activePage === "monitor" && (
-          <>
-            <header className="topbar">
-              <div>
-                <h1>{UI.monitorTitle}</h1>
-                <p>{UI.monitorSubtitle}</p>
-              </div>
-              <div className="topbar-tags">
-                <span className={`status-tag ${health.api ? "success" : "info"}`}>{health.api ? UI.apiOnline : UI.apiFallback}</span>
-                <span className={`status-tag ${health.redis ? "success" : "info"}`}>{health.redis ? UI.redisOnline : UI.redisOffline}</span>
-                <span className={`status-tag ${wsLive ? "success" : "info"}`}>{wsLive ? UI.wsConnected : UI.wsFallback}</span>
-                <span className={`status-tag ${health.stream_active ? "success" : "info"}`}>{health.stream_active ? UI.streamRunning : UI.streamIdle}</span>
-                <span className="status-tag info">{health.camera_id}</span>
-                <span className="help-dot">i</span>
-              </div>
-            </header>
-
-            <section className="monitor-grid">
-              <div className="subnav-row">
-                <div className="subnav-tabs">
-                  <button className={`subnav-button ${monitorMode === "upload" ? "active" : ""}`} onClick={() => setMonitorMode("upload")}>{UI.subUpload}</button>
-                  <button className={`subnav-button ${monitorMode === "track" ? "active" : ""}`} onClick={() => setMonitorMode("track")}>{UI.subTrack}</button>
-                  <button className={`subnav-button ${monitorMode === "video" ? "active" : ""}`} onClick={() => setMonitorMode("video")}>{UI.subAnalyze}</button>
-                </div>
-              </div>
-
-              <div className={`analysis-banner ${analysisBusy ? "busy" : ""}`}>
-                <div>
-                  <strong>人物追踪分析</strong>
-                  <span>{analysisMessage}</span>
-                </div>
-                <button className="analysis-trigger" onClick={handleTrackingAnalysis} disabled={analysisBusy}>
-                  {analysisBusy ? UI.trackingRunning : UI.trackingStart}
-                </button>
-              </div>
-
-              {monitorMode === "upload" ? (
-                <div className="upload-card">
-                  <div className="upload-placeholder">
-                    <div className="upload-icon">VID</div>
-                    <h2>{UI.uploadWaiting}</h2>
-                    <p>{UI.uploadHint}</p>
-                  </div>
-                  <label
-                    className={`dropzone ${dragActive ? "drag-active" : ""}`}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      setDragActive(true);
-                    }}
-                    onDragLeave={() => setDragActive(false)}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      setDragActive(false);
-                      applyFiles(event.dataTransfer.files);
-                    }}
-                  >
-                    <input
-                      type="file"
-                      multiple
-                      accept=".mp4,.avi,.mov"
-                      onChange={(event) => applyFiles(event.target.files)}
-                    />
-                    <div className="dropzone-plus">+</div>
-                    <strong>{UI.chooseFile}</strong>
-                    <em>{UI.dragFile}</em>
-                    <span>{UI.fileTypes}</span>
-                  </label>
-
-                  <div className="batch-board">
-                    <div className="batch-board-head">
-                      <h3>{UI.batchTitle}</h3>
-                      <span>{UI.batchCount}：{queue.length}</span>
-                    </div>
-                    {queue.length ? (
-                      <div className="batch-list">
-                        {queue.map((entry, index) => (
-                          <div className="batch-row" key={entry.id}>
-                            <div className="batch-file">
-                              <strong>{index + 1}. {entry.file.name}</strong>
-                              <span>{(entry.file.size / 1024 / 1024).toFixed(2)} MB</span>
-                            </div>
-                            <select value={entry.cameraId} onChange={(event) => updateQueueCamera(entry.id, event.target.value)}>
-                              {cameras.map((camera) => (
-                                <option key={camera.id} value={camera.id}>{camera.id} / {camera.name}</option>
-                              ))}
-                            </select>
-                            <span className={`queue-badge ${entry.status}`}>{entry.message}</span>
-                            <button className="queue-remove" type="button" onClick={() => removeQueueItem(entry.id)}>移除</button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="batch-empty">{UI.batchEmpty}</div>
-                    )}
-                  </div>
-
-                  <button className="primary-button" onClick={handleBatchUpload} disabled={uploadState === "uploading"}>
-                    {uploadState === "uploading" ? UI.uploading : UI.uploadBind}
-                  </button>
-                  <div className={`upload-tip ${uploadTipClass}`}>{uploadMessage}</div>
-                </div>
-              ) : monitorMode === "track" ? (
-                <div className="track-card">
-                  <div className="track-card-head">
-                    <h2>轨迹画布</h2>
-                    <span>{UI.trackHint}</span>
-                  </div>
-                  <div className="trajectory-stage">
-                    <TrajectoryCanvas tracks={tracks} />
-                    <div className="stage-overlay">
-                      <div className={`stage-status ${wsLive ? "online" : "muted"}`}>
-                        <div className="stage-led" />
-                        <span>{wsLive ? UI.wsConnected : UI.wsFallback}</span>
-                      </div>
-                    </div>
-                    <div className="stage-controls">
-                      <span>实时轨迹</span>
-                      <div className="stage-timeline" />
-                      <button className="stage-button">LIVE</button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <VideoTrackingPlayer
-                  videoUrl={videoUrl}
-                  tracks={tracks}
-                  detections={analysisDetections}
-                  title={UI.trackingPanelTitle}
-                  meta={UI.trackingPanelHint}
-                  analysisBusy={analysisBusy}
-                />
-              )}
-            </section>
-          </>
-        )}
+        {activePage === "monitor" && <MonitorDashboard token={token} />}
 
         {activePage === "overview" && (
           <>
@@ -953,18 +994,32 @@ function App() {
                   <option key={level} value={level}>{level}</option>
                 ))}
               </select>
-              <select value={windowFilter} disabled>
+              <select value={windowFilter} onChange={(event) => setWindowFilter(event.target.value)}>
                 {logWindows.map((window) => (
                   <option key={window} value={window}>{window}</option>
+                ))}
+              </select>
+              <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
+                {logSources.map((source) => (
+                  <option key={source.value} value={source.value}>{source.label}</option>
+                ))}
+              </select>
+              <select value={logPageSize} onChange={(event) => setLogPageSize(Number(event.target.value))}>
+                {LOG_PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>{UI.logsPageSize}：{size}</option>
                 ))}
               </select>
               <button className="refresh-button" onClick={refreshLogs}>{UI.refresh}</button>
             </div>
 
+            {logsError ? <div className="upload-tip error">{logsError}</div> : null}
+            {!logsError && !visibleLogs.length ? <div className="upload-tip">{UI.logsEmpty}</div> : null}
+
             <div className="log-viewer">
               <div className="log-viewer-head">
                 <span>时间戳</span>
                 <span>级别</span>
+                <span>{UI.logsSource}</span>
                 <span>事件描述</span>
               </div>
               <div className="log-list">
@@ -972,9 +1027,21 @@ function App() {
                   <div className="log-row" key={index}>
                     <div className="log-time">{entry.ts}</div>
                     <div className={`log-level ${entry.level.toLowerCase()}`}>{entry.level}</div>
-                    <div className="log-text">{entry.text}</div>
+                    <div className={`log-source source-${(entry.source || "app").toLowerCase()}`}>{entry.source || "app"}</div>
+                    <div className="log-text-block">
+                      <div className="log-text">{entry.text}</div>
+                      {entry.context ? <div className="log-context">{formatLogContext(entry.context)}</div> : null}
+                    </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="log-pagination">
+              <span className="log-pagination-info">{logPageInfo}</span>
+              <div className="log-pagination-actions">
+                <button className="outline-blue" disabled={logPage <= 1} onClick={() => setLogPage((current) => Math.max(1, current - 1))}>{UI.logsPrev}</button>
+                <button className="outline-blue" disabled={logPage >= totalLogPages || !visibleLogs.length} onClick={() => setLogPage((current) => Math.min(totalLogPages, current + 1))}>{UI.logsNext}</button>
               </div>
             </div>
           </section>
@@ -985,11 +1052,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-

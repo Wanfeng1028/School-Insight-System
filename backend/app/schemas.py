@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 from typing import List, Literal
 
 from pydantic import BaseModel
@@ -25,7 +25,7 @@ class OverviewPayload(BaseModel):
 
 class LogEntry(BaseModel):
     ts: datetime
-    level: Literal["INFO", "DEBUG", "WARN"]
+    level: Literal["INFO", "DEBUG", "WARN", "ERROR"]
     text: str
 
 
@@ -61,9 +61,33 @@ class ForgotPasswordPayload(BaseModel):
 
 class ResetPasswordPayload(BaseModel):
     email: str
-    token: str
+    code: str | None = None
+    token: str | None = None
     password: str
 
 
 class AnalysisPayload(BaseModel):
     filename: str | None = None
+
+
+CameraSourceType = Literal["mock", "file", "rtsp"]
+
+
+class CameraPayloadBase(BaseModel):
+    name: str
+    source_type: CameraSourceType = "mock"
+    source_url: str = ""
+    enabled: bool = False
+    fps_limit: int = 6
+
+
+class CameraCreatePayload(CameraPayloadBase):
+    pass
+
+
+class CameraUpdatePayload(BaseModel):
+    name: str | None = None
+    source_type: CameraSourceType | None = None
+    source_url: str | None = None
+    enabled: bool | None = None
+    fps_limit: int | None = None

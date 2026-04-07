@@ -1,8 +1,16 @@
-﻿node_modules/
+node_modules/
 dist/
 .vscode/
+.env.local
+playwright-report/
+test-results/
+automation/.auth-artifacts/
 
 backend/.venv/
+backend/.venv310/
 backend/uploads/
+backend/data/events.jsonl
+backend/data/users.json
+backend/data/analysis_tasks.json
 __pycache__/
 *.pyc
